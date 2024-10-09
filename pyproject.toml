@@ -5,6 +5,9 @@ license = { "file" = "./LICENSE" }
 readme = "./README.md"
 urls = { "Source" = "https://github.com/thesola10/ostree-sysext" }
 dependencies = [
+    "click",
+    "click-option-group",
+    "rich",
     "PyGObject",
     "systemd-python"
     ]
@@ -19,7 +22,7 @@ requires = [ "setuptools" ]
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
-ostree-sysext = "ostree_sysext.main:main"
+ostree-sysext = "ostree_sysext.cli:main_fixed_for_ostree"
 
 [tool.bumpver]
 current_version = "0.0.1"

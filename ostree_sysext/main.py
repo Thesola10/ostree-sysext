@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# My Awesome Script (c) Karim Vergnes <me@thesola.io>
-# Does something awesome
-# Licensed for private use exclusively
+# ostree-sysext (c) Karim Vergnes <me@thesola.io>
+# Manage system extensions for OSTree systems
+# Licensed under GNU GPL
 
 """
-Docstring
+
 """
 
 if __name__ == '__main__':
