@@ -9,6 +9,7 @@ from rich.console       import Console
 from rich.logging       import RichHandler
 
 from .. import __version__
+from .commands import list_command
 
 cons = Console()
 common_group = OptionGroup("Common options for ostree-sysext")
@@ -45,3 +46,10 @@ def main(ctx: click.Context, **kwargs):
                                     console             = cons,
                                     show_path           = _debug)
                        ])
+    if ctx.invoked_subcommand is None:
+        list_command._cmd(cons, **kwargs)
+
+@main.command("list", help='List installed system extensions')
+@_use_common_group
+def _list(**kwargs):
+    list_command._cmd(cons, **kwargs)
