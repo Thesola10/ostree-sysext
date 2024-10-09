@@ -1,0 +1,38 @@
+[project]
+name = "ostree-sysext"
+description = "Handy system extension manager for OSTree systems"
+license = { "file" = "./LICENSE" }
+readme = "./README.md"
+urls = { "Source" = "https://github.com/thesola10/ostree-sysext"
+dependencies = [
+    "PyGObject",
+    "systemd-python"
+    ]
+dynamic = [ "version" ]
+
+[[project.authors]]
+name = "Karim Vergnes"
+email = "me@thesola.io"
+
+[build-system]
+requires = [ "setuptools" ]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+ostree-sysext = "ostree-sysext.main:main"
+
+[tool.bumpver]
+current_version = "0.0.1"
+version_pattern = "MAJOR.MINOR.PATCH"
+commit_message = "bump version {old_version} -> {new_version}"
+commit = true
+tag = false
+push = true
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    'current_version = "{version}"'
+]
+"ostree-sysext/__init__.py" = [
+    "__version__ = '{version}'"
+]
