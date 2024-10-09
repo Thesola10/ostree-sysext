@@ -3,7 +3,7 @@ name = "ostree-sysext"
 description = "Handy system extension manager for OSTree systems"
 license = { "file" = "./LICENSE" }
 readme = "./README.md"
-urls = { "Source" = "https://github.com/thesola10/ostree-sysext"
+urls = { "Source" = "https://github.com/thesola10/ostree-sysext" }
 dependencies = [
     "PyGObject",
     "systemd-python"
