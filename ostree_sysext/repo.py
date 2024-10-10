@@ -12,5 +12,3 @@ def open_system_repo(path: str) -> OSTree.Repo:
     repo = OSTree.Repo.new(Gio.File.new_for_path(Path(path).joinpath('repo')))
     repo.open()
     return repo
-
-

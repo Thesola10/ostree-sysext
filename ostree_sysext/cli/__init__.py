@@ -53,3 +53,58 @@ def main(ctx: click.Context, **kwargs):
 @_use_common_group
 def _list(**kwargs):
     list_command._cmd(cons, **kwargs)
+
+@main.command('add', help='Import a system extension without deploying it')
+@_use_common_group
+def _add(**kwargs):
+    logging.warn("add")
+
+@main.command("remove", help='Remove a system extension completely')
+@_use_common_group
+def _remove(**kwargs):
+    logging.warn("remove")
+
+@main.command("deploy", help='Deploy a system extension on top of this system')
+@_use_common_group
+def _deploy(**kwargs):
+    logging.warn("deploy")
+
+@main.command("undeploy", help='Disable an active system extension')
+@_use_common_group
+def _undeploy(**kwargs):
+    logging.warn("undeploy")
+
+@main.command("rollback", help='Revert a system extension to a previous version')
+@_use_common_group
+def _rollback(**kwargs):
+    logging.warn("rollback")
+
+@main.command("mutate", help='Make a system directory read/write')
+@_use_common_group
+def _mutate(**kwargs):
+    logging.warn("mutate")
+
+@main.command("build", help='Build a system extension from a Containerfile')
+@_use_common_group
+def _build(**kwargs):
+    logging.warn("build")
+
+@main.command("edit", help='Modify and commit a local system extension')
+@_use_common_group
+def _edit(**kwargs):
+    logging.warn("edit")
+
+@main.command("upgrade", help='Update all system extensions')
+@_use_common_group
+def _upgrade(**kwargs):
+    logging.warn("upgrade")
+
+@main.command("live-update", help='Apply an update to the base system as an extension')
+@_use_common_group
+def _live_update(**kwargs):
+    logging.warn("live-update")
+
+@main.command("initramfs", help='Enable or disable local initramfs regeneration')
+@_use_common_group
+def _initramfs(**kwargs):
+    logging.warn("initramfs")
