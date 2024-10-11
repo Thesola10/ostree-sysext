@@ -10,7 +10,8 @@ dependencies = [
     "rich",
     "PyGObject",
     "python-dotenv",
-    "systemd-python"
+    "systemd-python",
+    "mntfinder"
     ]
 dynamic = [ "version" ]
 

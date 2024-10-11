@@ -7,7 +7,7 @@ from rich           import box
 from logging        import debug, error, warn
 
 from ...extensions  import DeployState, Extension
-from ...environment import list_sysexts
+from ...environment import list_sysexts, list_mutables
 
 table_states = {
     DeployState.ACTIVE:   Text("active",    style="green bold"),
@@ -57,7 +57,6 @@ def print_extension(tb: Table, ext: Extension):
     tb.add_row(ext.get_id(), ext.get_name(), ext.get_version(), table_states[ext.get_state()])
 
 def _cmd(console: Console, **args):
-    warn("the following output is a proof of concept")
     tb = Table(box=box.SIMPLE)
     tb.add_column("ID", justify="right", no_wrap=True)
     tb.add_column("NAME")
@@ -67,10 +66,11 @@ def _cmd(console: Console, **args):
     for ext in list_sysexts():
         print_extension(tb, ext)
 
-    tb.add_row()
-
-    print_extension(tb, DummyExtension("mutable:usr", "Mutable /usr directory", "", DeployState.INACTIVE))
-    print_extension(tb, DummyExtension("mutable:etc", "Mutable /etc directory", "", DeployState.IMPORTED))
+    mutables = list_mutables()
+    if len(mutables) > 0:
+        tb.add_row()
+        for mut in mutables:
+            print_extension(tb, mut)
 
     tb.add_row()
 
