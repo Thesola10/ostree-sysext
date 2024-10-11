@@ -6,14 +6,54 @@ from rich.text      import Text
 from rich           import box
 from logging        import debug, error, warn
 
-STATE_ACTIVE = Text("active", style="green bold")
-STATE_INACTIVE = Text("inactive")
-STATE_IMPORTED = Text("imported", style="green")
-STATE_EXTERNAL = Text("external", style="bright_white")
-STATE_STAGED = Text("staged", style="yellow bold")
-STATE_UNSTAGED = Text("unstaged", style="yellow")
-STATE_INCOMPAT = Text("incompat", style="red")
-STATE_OUTDATED = Text("outdated", style="red bold")
+from ...systemd     import DeployState, Extension
+
+table_states = {
+    DeployState.ACTIVE:   Text("active",    style="green bold"),
+    DeployState.INACTIVE: Text("inactive"),
+    DeployState.IMPORTED: Text("imported",  style="green"),
+    DeployState.EXTERNAL: Text("external",  style="bright_white"),
+    DeployState.STAGED:   Text("staged",    style="yellow bold"),
+    DeployState.UNSTAGED: Text("unstaged",  style="yellow"),
+    DeployState.INCOMPAT: Text("incompat",  style="red"),
+    DeployState.OUTDATED: Text("outdated",  style="red bold")
+}
+
+class DummyExtension(Extension):
+    state: DeployState
+    id: str
+    name: str
+    version: str
+
+    def __init__(self, id, name, version, state):
+        self.id = id
+        self.name = name
+        self.version = version
+        self.state = state
+
+    def get_state(self):
+        return self.state
+
+    def get_id(self):
+        return self.id
+
+    def get_name(self):
+        return self.name
+
+    def get_version(self):
+        return self.version
+
+dummy_exts = [
+    DummyExtension("sdk", "Fedora 41 Developer Tools", "41.0.1284", DeployState.ACTIVE),
+    DummyExtension("thing", "Fedora 40 Something", "40.1.3018", DeployState.OUTDATED),
+    DummyExtension("my-extension", "extension demo for Fedora", "1", DeployState.EXTERNAL),
+    DummyExtension("hello", "Hello!", "1.0", DeployState.STAGED),
+    DummyExtension("goodbye", "See ya later", "0.1", DeployState.UNSTAGED),
+    DummyExtension("lol", "Debian Thingamajig", "9.0.1", DeployState.INCOMPAT),
+]
+
+def print_extension(tb: Table, ext: Extension):
+    tb.add_row(ext.get_id(), ext.get_name(), ext.get_version(), table_states[ext.get_state()])
 
 def _cmd(console: Console, **args):
     warn("the following output is a proof of concept")
@@ -23,15 +63,15 @@ def _cmd(console: Console, **args):
     tb.add_column("VERSION", no_wrap=True)
     tb.add_column("STATE")
 
-    tb.add_row("sdk", "Fedora 41 Developer Tools", "41.0.1284", STATE_ACTIVE)
-    tb.add_row("thing", "Fedora 40 Something", "40.1.3018", STATE_OUTDATED)
-    tb.add_row("my-extension", "extension demo for Fedora", "1", STATE_EXTERNAL)
-    tb.add_row("hello", "Hello!", "1.0", STATE_STAGED)
-    tb.add_row("goodbye", "See ya later", "0.1", STATE_UNSTAGED)
-    tb.add_row("lol", "Debian Thingamajig", "9.0.1", STATE_INCOMPAT)
+    for ext in dummy_exts:
+        print_extension(tb, ext)
+
     tb.add_row()
-    tb.add_row("mutable:usr", "Mutable /usr directory", "", STATE_INACTIVE)
-    tb.add_row("mutable:etc", "Mutable /etc directory", "", STATE_IMPORTED)
+
+    print_extension(tb, DummyExtension("mutable:usr", "Mutable /usr directory", "", DeployState.INACTIVE))
+    print_extension(tb, DummyExtension("mutable:etc", "Mutable /etc directory", "", DeployState.IMPORTED))
+
     tb.add_row()
-    tb.add_row("initramfs", "Locally built initramfs", "2ac7148d", STATE_ACTIVE)
+
+    print_extension(tb, DummyExtension("initramfs", "Locally built initramfs", "2ac7148d", DeployState.ACTIVE))
     console.print(tb)
