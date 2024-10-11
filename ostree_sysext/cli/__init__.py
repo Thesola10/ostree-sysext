@@ -15,6 +15,7 @@ cons = Console()
 common_group = OptionGroup("Common options for ostree-sysext")
 
 def _use_common_group(fn):
+    @common_group.option('--sysroot', default='/', help='Use system root')
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         return fn(*args, **kwargs)
@@ -31,8 +32,6 @@ def main_fixed_for_ostree():
 @click.group(invoke_without_command=True,
              help='test')
 @_use_common_group
-@click.option('--sysroot', default='/',
-              help='Use system root')
 @click.version_option(__version__)
 @click.pass_context
 def main(ctx: click.Context, **kwargs):

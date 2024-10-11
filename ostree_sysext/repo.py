@@ -7,7 +7,8 @@ from pathlib        import Path
 from dotenv         import dotenv_values
 from io             import StringIO
 
-from .systemd       import Extension, DeployState
+from .systemd       import list_staged, list_deployed
+from .extensions    import Extension, DeployState
 
 NOFLAGS = Gio.FileQueryInfoFlags.NONE
 
@@ -15,7 +16,7 @@ def open_system_repo(path: str) -> OSTree.Repo:
     '''Returns the OSTree Repo object for the given repository, setting up
     deployment areas for sysext if not already done
     '''
-    repo = OSTree.Repo.new(Gio.File.new_for_path(Path(path).joinpath('repo')))
+    repo = OSTree.Repo.new(Gio.File.new_for_path(str(Path(path).joinpath('repo'))))
     repo.open()
     return repo
 
@@ -69,23 +70,17 @@ class RepoExtension(Extension):
         self.id = rel_name[len("extension-release."):]
         self.rel_info = dotenv_values(stream=StringIO(rel_file.load_contents().contents.decode()))
 
-    def get_id(self):
-        return self.id
-
-    def get_name(self):
-        if "NAME" in self.rel_info:
-            return self.rel_info["NAME"]
-        else:
-            return self.id
-
-    def get_version(self):
-        if "OSTREE_VERSION" in self.rel_info:
-            return self.rel_info["OSTREE_VERSION"]
-        else:
-            return ""
-
     def get_state(self):
-        return DeployState.INACTIVE
+        staged = self.id in list_staged().keys()
+        deployed = self.id in list_deployed()
+        if staged and deployed:
+            return DeployState.ACTIVE
+        elif staged:
+            return DeployState.STAGED
+        elif deployed:
+            return DeployState.UNSTAGED
+        else:
+            return DeployState.INACTIVE
 
     def get_rel_info(self):
         return self.rel_info

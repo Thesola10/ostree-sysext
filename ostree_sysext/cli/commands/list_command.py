@@ -6,7 +6,8 @@ from rich.text      import Text
 from rich           import box
 from logging        import debug, error, warn
 
-from ...systemd     import DeployState, Extension
+from ...extensions  import DeployState, Extension
+from ...environment import list_sysexts
 
 table_states = {
     DeployState.ACTIVE:   Text("active",    style="green bold"),
@@ -42,15 +43,15 @@ class DummyExtension(Extension):
 
     def get_version(self):
         return self.version
-
-dummy_exts = [
-    DummyExtension("sdk", "Fedora 41 Developer Tools", "41.0.1284", DeployState.ACTIVE),
-    DummyExtension("thing", "Fedora 40 Something", "40.1.3018", DeployState.OUTDATED),
-    DummyExtension("my-extension", "extension demo for Fedora", "1", DeployState.EXTERNAL),
-    DummyExtension("hello", "Hello!", "1.0", DeployState.STAGED),
-    DummyExtension("goodbye", "See ya later", "0.1", DeployState.UNSTAGED),
-    DummyExtension("lol", "Debian Thingamajig", "9.0.1", DeployState.INCOMPAT),
-]
+#
+#dummy_exts = [
+#    DummyExtension("sdk", "Fedora 41 Developer Tools", "41.0.1284", DeployState.ACTIVE),
+#    DummyExtension("thing", "Fedora 40 Something", "40.1.3018", DeployState.OUTDATED),
+#    DummyExtension("my-extension", "extension demo for Fedora", "1", DeployState.EXTERNAL),
+#    DummyExtension("hello", "Hello!", "1.0", DeployState.STAGED),
+#    DummyExtension("goodbye", "See ya later", "0.1", DeployState.UNSTAGED),
+#    DummyExtension("lol", "Debian Thingamajig", "9.0.1", DeployState.INCOMPAT),
+#]
 
 def print_extension(tb: Table, ext: Extension):
     tb.add_row(ext.get_id(), ext.get_name(), ext.get_version(), table_states[ext.get_state()])
@@ -63,7 +64,7 @@ def _cmd(console: Console, **args):
     tb.add_column("VERSION", no_wrap=True)
     tb.add_column("STATE")
 
-    for ext in dummy_exts:
+    for ext in list_sysexts():
         print_extension(tb, ext)
 
     tb.add_row()
