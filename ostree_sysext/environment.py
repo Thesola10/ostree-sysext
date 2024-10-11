@@ -7,26 +7,26 @@ from .extensions    import Extension, DeployState
 
 
 class MutableExtension(Extension):
-    dir: str
+    root: str
     id: str
 
-    def __init__(self, dir: str):
-        self.dir = dir
-        self.id = f"mutable:{dir}"
+    def __init__(self, root: str):
+        self.root = root
+        self.id = f"mutable:{root}"
 
     def get_name(self):
-        return f"Mutable /{dir} directory"
+        return f"Mutable /{self.root} directory"
 
     def get_version(self):
         return ""
 
     def get_state(self):
-        mi = getMountPoint(Path('/').join(dir))
+        mi = getMountPoint(Path('/', self.root))
         if 'rw' in mi.options:
             return DeployState.ACTIVE
         lower = list(filter(lambda o: o.startswith('lowerdir='), mi.options))[0]
         lowerdirs = lower[len('lowerdir='):].split(':')
-        if str(Path('/', 'var', 'lib', 'extensions.mutable', dir)) in lowerdirs:
+        if str(Path('/', 'var', 'lib', 'extensions.mutable', self.root)) in lowerdirs:
             return DeployState.IMPORTED
         return DeployState.INACTIVE
 
@@ -54,6 +54,7 @@ def list_mutables() -> list[MutableExtension]:
     if not mutables.exists():
         return exts
     for mut in mutables.iterdir():
-        exts.append(MutableExtension(mut.name))
+        if not mut.name.startswith('.'):
+            exts.append(MutableExtension(mut.name))
     return exts
 
