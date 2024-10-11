@@ -84,3 +84,11 @@ class RepoExtension(Extension):
 
     def get_rel_info(self):
         return self.rel_info
+
+    def deploy(self):
+        # Mount (composefs) or symlink into /run/extensions
+        pass
+
+    def undeploy(self):
+        # Unmount/unlink from /run/extensions
+        pass

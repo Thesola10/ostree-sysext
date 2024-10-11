@@ -56,3 +56,9 @@ class ExternalExtension(Extension):
         with ext_rel.open() as f:
             self.rel_info = dotenv_values(stream=f)
 
+    def deploy(self):
+        raise TypeError("External extensions cannot be deployed.")
+
+    def undeploy(self):
+        raise TypeError("External extensions cannot be undeployed.")
+
