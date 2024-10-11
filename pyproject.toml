@@ -9,6 +9,7 @@ dependencies = [
     "click-option-group",
     "rich",
     "PyGObject",
+    "python-dotenv",
     "systemd-python"
     ]
 dynamic = [ "version" ]
