@@ -24,7 +24,7 @@ def _use_common_group(fn):
 # For some reason, OSTree sends our own subcommand name when calling,
 # drop it before entering click logic.
 def main_fixed_for_ostree():
-    if sys.argv[1] == 'sysext':
+    if len(sys.argv) > 1 and sys.argv[1] == 'sysext':
         sys.argv = sys.argv[1:]
         sys.argv[0] = 'ostree sysext'
     return main()
