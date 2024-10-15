@@ -1,6 +1,8 @@
 from enum       import Enum
 
 class DeployState(Enum):
+    '''List of possible deployment states for a given Extension.
+    '''
     EXTERNAL = 0  # Not managed by ostree-sysext (e.g. /var/lib/extensions)
     ACTIVE   = 1  # Applied by systemd-sysext
     INACTIVE = 2  # Removed from systemd-sysext paths
@@ -9,6 +11,11 @@ class DeployState(Enum):
     UNSTAGED = 5  # Applied but removed from systemd-sysext dirs
     INCOMPAT = 6  # os-release ID mismatch
     OUTDATED = 7  # Version check mismatch
+
+class CompatVote(Enum):
+    APPROVE = 0 # No objections
+    WARN    = 1 # Objection can be bypassed using --force
+    VETO    = 2 # Objection cannot be bypassed
 
 class Extension:
     DEPLOY_PATH = "/run/extensions"
