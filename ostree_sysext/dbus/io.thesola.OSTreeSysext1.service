@@ -1,0 +1,9 @@
+# Install to xdg-data/dbus-1/system-services
+
+[D-BUS Service]
+Name=io.thesola.OSTreeSysext1
+Exec=/usr/bin/ostree-sysext daemon
+User=root
+SystemdService=ostree-sysext.service
+
+# vim: ft=systemd

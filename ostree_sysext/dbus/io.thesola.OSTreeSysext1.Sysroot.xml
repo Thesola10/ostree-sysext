@@ -1,0 +1,18 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+                      "https://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+ <interface name="io.thesola.OSTreeSysext1.Sysroot">
+  <property name="BootedOS"         type="o"    access="read"/>
+  <property name="Extensions"       type="ao"   access="read"/>
+  <property name="Path"             type="s"    access="read"/>
+  <property name="Remotes"          type="ao"   access="read"/>
+  <method name="GetOS">
+   <arg type="s" name="name"    direction="in"/>
+   <arg type="o" name="result"  direction="out"/>
+  </method>
+  <method name="AddExtension">
+   <arg type="s" name="ref"     direction="in"/>
+   <arg type="o" name="result"  direction="out"/>
+  </method>
+ </interface>
+</node>

@@ -8,8 +8,9 @@ from click_option_group import OptionGroup
 from rich.console       import Console
 from rich.logging       import RichHandler
 
-from .. import __version__
-from .commands import list_command
+from ..                 import __version__
+from .commands          import list_command
+from ..dbus             import dbus_main
 
 cons = Console()
 common_group = OptionGroup("Common options for ostree-sysext")
@@ -29,8 +30,9 @@ def main_fixed_for_ostree():
         sys.argv[0] = 'ostree sysext'
     return main()
 
+
 @click.group(invoke_without_command=True,
-             help='test')
+             help='Handy system extension manager for OSTree systems')
 @_use_common_group
 @click.version_option(__version__)
 @click.pass_context
@@ -48,10 +50,12 @@ def main(ctx: click.Context, **kwargs):
     if ctx.invoked_subcommand is None:
         list_command._cmd(cons, **kwargs)
 
+
 @main.command("list", help='List installed system extensions')
 @_use_common_group
 def _list(**kwargs):
     list_command._cmd(cons, **kwargs)
+
 
 @main.command('add', help='Import a system extension without deploying it')
 @_use_common_group
@@ -63,6 +67,7 @@ def _add(**kwargs):
 def _remove(**kwargs):
     logging.warn("remove")
 
+
 @main.command("deploy", help='Deploy a system extension on top of this system')
 @_use_common_group
 def _deploy(**kwargs):
@@ -72,6 +77,7 @@ def _deploy(**kwargs):
 @_use_common_group
 def _undeploy(**kwargs):
     logging.warn("undeploy")
+
 
 @main.command("rollback", help='Revert a system extension to a previous version')
 @_use_common_group
@@ -93,6 +99,7 @@ def _build(**kwargs):
 def _edit(**kwargs):
     logging.warn("edit")
 
+
 @main.command("upgrade", help='Update all system extensions')
 @_use_common_group
 def _upgrade(**kwargs):
@@ -107,3 +114,9 @@ def _live_update(**kwargs):
 @_use_common_group
 def _initramfs(**kwargs):
     logging.warn("initramfs")
+
+
+@main.command("daemon", hidden=True,
+              help='Internal command used to invoke daemon over D-Bus')
+def _daemon(**kwargs):
+    return dbus_main()

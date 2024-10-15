@@ -1,0 +1,29 @@
+# Install to lib/systemd/system
+
+[Unit]
+Description=OSTree System Extension Management Daemon
+Documentation=man:ostree-sysext(1)
+ConditionPathExists=/ostree
+
+[Service]
+User=ostree-sysext
+DynamicUser=yes
+
+Type=dbus
+BusName=io.thesola.OSTreeSysext1
+
+MountFlags=slave
+
+# We normally should not need to access user homes. Ideally, the builder
+# is completely unprivileged and creates an OSTree "transaction" using
+# OverlayFS, which our privileged daemon then sanity-checks and imports.
+#TODO: Reconsider with builder API
+ProtectHome=true
+NotifyAccess=main
+
+TimeoutStartSec=5m
+
+ExecStart=+ostree-sysext daemon
+ExecReload=ostree-sysext refresh
+
+# vim: ft=systemd

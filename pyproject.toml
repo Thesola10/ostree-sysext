@@ -11,7 +11,8 @@ dependencies = [
     "PyGObject",
     "python-dotenv",
     "systemd-python",
-    "mntfinder"
+    "mntfinder",
+    "pydbus"
     ]
 dynamic = [ "version" ]
 
@@ -25,6 +26,9 @@ build-backend = "setuptools.build_meta"
 
 [project.scripts]
 ostree-sysext = "ostree_sysext.cli:main_fixed_for_ostree"
+
+[tool.setuptools]
+py-modules = [ "ostree_sysext" ]
 
 [tool.bumpver]
 current_version = "0.0.1"
