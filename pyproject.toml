@@ -30,6 +30,9 @@ ostree-sysext = "ostree_sysext.cli:main_fixed_for_ostree"
 [tool.setuptools]
 py-modules = [ "ostree_sysext" ]
 
+[tool.setuptools.package-data]
+"ostree_sysext.dbus" = [ "*.service", "*.xml" ]
+
 [tool.bumpver]
 current_version = "0.0.1"
 version_pattern = "MAJOR.MINOR.PATCH"
