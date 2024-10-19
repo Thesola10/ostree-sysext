@@ -45,6 +45,6 @@ push = true
 "pyproject.toml" = [
     'current_version = "{version}"'
 ]
-"ostree-sysext/__init__.py" = [
+"ostree_sysext/__init__.py" = [
     "__version__ = '{version}'"
 ]
