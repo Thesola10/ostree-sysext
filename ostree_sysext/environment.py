@@ -1,5 +1,10 @@
-from mntfinder      import getMountPoint
+import os
+import pwd
+
+from logging        import error
+from mntfinder      import getMountPoint, getAllMountPoints
 from pathlib        import Path
+
 
 from .systemd       import ExternalExtension, list_deployed, list_staged
 from .repo          import RepoExtension, open_system_repo, find_sysext_refs
@@ -7,6 +12,9 @@ from .extensions    import Extension, DeployState
 
 
 class MutableExtension(Extension):
+    MUTABLE_BACKING_PATH = Path('var','lib','ostree-sysext','mutable')
+    MUTABLE_DEPLOY_PATH = Path('var','lib','extensions.mutable')
+
     root: str
     id: str
 
@@ -22,12 +30,14 @@ class MutableExtension(Extension):
 
     def get_state(self):
         mi = getMountPoint(Path('/', self.root))
+        if not self.MUTABLE_BACKING_PATH.joinpath(self.root).exists():
+            return DeployState.EXTERNAL
         if 'rw' in mi.options:
             return DeployState.ACTIVE
 
         lower = list(filter(lambda o: o.startswith('lowerdir='), mi.options))[0]
         lowerdirs = lower[len('lowerdir='):].split(':')
-        if str(Path('/', 'var', 'lib', 'extensions.mutable', self.root)) in lowerdirs:
+        if str(Path('/', self.MUTABLE_DEPLOY_PATH, self.root)) in lowerdirs:
             return DeployState.IMPORTED
         return DeployState.INACTIVE
 
@@ -35,19 +45,22 @@ class MutableExtension(Extension):
         raise ValueError("Mutables do not have a release-info")
 
     def deploy(self):
-        #TODO: activate mutation
-        pass
+        if self.get_state() == DeployState.EXTERNAL:
+            raise ValueError("Cannot deploy an external mutable!")
+        os.symlink(Path('..','ostree-sysext','mutable',self.root),
+                   self.MUTABLE_DEPLOY_PATH)
 
     def undeploy(self):
-        #TODO: disable mutation or move out of mut space
-        pass
+        if self.get_state() == DeployState.EXTERNAL:
+            raise ValueError("Cannot undeploy an external mutable!")
+        self.MUTABLE_DEPLOY_PATH.join(self.root).unlink()
 
-    def mutate_lock(self):
-        #TODO: exclusive to Mutables, move to imported
-        pass
 
 def list_sysexts() -> list[Extension]:
-    repo = open_system_repo('/ostree')
+    '''Return a list of Extension objects discovered at the current root.
+    PWD needs to be the root we are operating in.
+    '''
+    repo = open_system_repo(Path('ostree'))
     exts = [RepoExtension(repo, ref) for ref in find_sysext_refs(repo)]
     repo_ids = [ex.get_id() for ex in exts]
     staged_ids = list_staged()
@@ -65,12 +78,19 @@ def list_sysexts() -> list[Extension]:
     return exts
 
 def list_mutables() -> list[MutableExtension]:
-    mutables = Path('/', 'var', 'lib', 'extensions.mutable')
+    '''Return a list of MutableExtension objects discovered at the current root.
+    PWD needs to be the root we are operating in.
+    '''
+    mutables = MutableExtension.MUTABLE_DEPLOY_PATH
+    backing = MutableExtension.MUTABLE_BACKING_PATH
     exts = []
-    if not mutables.exists():
-        return exts
-    for mut in mutables.iterdir():
-        if not mut.name.startswith('.'):
-            exts.append(MutableExtension(mut.name))
+    if mutables.exists():
+        for mut in mutables.iterdir():
+            if not mut.name.startswith('.'):
+                exts.append(MutableExtension(mut.name))
+    if backing.exists():
+        for mut in backing.iterdir():
+            if mut.name not in [x.name for x in exts]:
+                exts.append(MutableExtension(mut.name))
     return exts
 

@@ -1,4 +1,5 @@
 from enum       import Enum
+from pathlib    import Path
 
 class DeployState(Enum):
     '''List of possible deployment states for a given Extension.
@@ -18,10 +19,7 @@ class CompatVote(Enum):
     VETO    = 2 # Objection cannot be bypassed
 
 class Extension:
-    DEPLOY_PATH = "/run/extensions"
-    BOOT_PATH = "/.extra/sysext"
-    CONFIG_PATH = "/etc/extensions"
-    USER_PATH = "/var/lib/extensions"
+    DEPLOY_PATH = Path('/','run','extensions')
 
     id: str
     rel_info: dict
@@ -52,4 +50,3 @@ class Extension:
 
     def undeploy(self):
         raise NotImplemented()
-

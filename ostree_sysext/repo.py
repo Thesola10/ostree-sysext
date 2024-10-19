@@ -10,6 +10,7 @@ from io             import StringIO
 from .systemd       import list_staged, list_deployed
 from .extensions    import Extension, DeployState
 
+
 NOFLAGS = Gio.FileQueryInfoFlags.NONE
 
 def open_system_repo(path: str) -> OSTree.Repo:
@@ -51,8 +52,35 @@ def find_sysext_refs(repo: OSTree.Repo, prefix = None):
         if ref_is_sysext(repo.read_commit(ref)):
             yield ref
 
+def composefs_is_enabled(repo: OSTree.Repo) -> bool:
+    '''Check whether composefs is enabled in the OSTree repository.
+    '''
+    try:
+        repo.get_config().get_keys('ex-integrity')
+        cfs = repo.get_config().get_value('ex-integrity', 'composefs')
+        return cfs == 'true'
+    except:
+        return False
+
+def checkout_aware(repo: OSTree.Repo, ref: str, dest: str):
+    '''Checkout ref into given space, while cleaning up previous deployments
+    and generating composefs metadata if enabled.
+    '''
+    opts = OSTree.RepoCheckoutAtOptions()
+    opts.enable_uncompressed_cache = True
+
+    local, _r, commit = repo.read_commit(ref)
+    destpath = Path(dest, f'{commit}.0')
+    repo.checkout_at(opts, None, str(destpath), commit)
+    if composefs_is_enabled():
+        repo.checkout_composefs(None, None, str(destpath.joinpath('.ostree.cfs')), commit)
+
 
 class RepoExtension(Extension):
+    EXTENSION_PATH = Path('ostree','extensions')
+
+    repo: OSTree.Repo
+    commit: str
     root: OSTree.RepoFile
     rel_info: dict
     id: str
@@ -62,6 +90,8 @@ class RepoExtension(Extension):
         if not ref_is_sysext(commit):
             raise ValueError("Specified ref is not a valid OSTree sysext")
         self.root = commit.out_root
+        self.repo = repo
+        self.commit = commit[2]
         ext_rel = commit.out_root \
                         .get_child('usr').get_child('lib') \
                         .get_child('extension-release.d')
@@ -87,8 +117,12 @@ class RepoExtension(Extension):
 
     def deploy(self):
         # Mount (composefs) or symlink into /run/extensions
-        pass
+        mypath = self.EXTENSION_PATH.joinpath(self.id, 'deploy')
+        if not mypath.joinpath(f'{self.commit}.0').exists():
+            checkout_aware(self.repo, self.commit, mypath)
+        os.symlink(self.EXTENSION_PATH.joinpath(f'{self.commit}.0'),
+                   self.DEPLOY_PATH.joinpath(self.id))
 
     def undeploy(self):
         # Unmount/unlink from /run/extensions
-        pass
+        self.DEPLOY_PATH.joinpath(self.id).unlink()

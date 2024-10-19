@@ -37,6 +37,7 @@ def main_fixed_for_ostree():
 @click.version_option(__version__)
 @click.pass_context
 def main(ctx: click.Context, **kwargs):
+    global sysroot
     _debug = os.getenv('OSTREE_SYSEXT_DEBUG') is not None
     logging.basicConfig(
             level    = 'DEBUG' if _debug else 'INFO',
@@ -47,6 +48,10 @@ def main(ctx: click.Context, **kwargs):
                                     console             = cons,
                                     show_path           = _debug)
                        ])
+    if kwargs['sysroot'] != '':
+        os.chdir(kwargs['sysroot'])
+    else:
+        os.chdir('/')
     if ctx.invoked_subcommand is None:
         list_command._cmd(cons, **kwargs)
 
