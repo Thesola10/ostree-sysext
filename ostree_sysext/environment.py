@@ -6,7 +6,7 @@ from mntfinder      import getMountPoint, getAllMountPoints
 from pathlib        import Path
 
 
-from .systemd       import ExternalExtension, list_deployed, list_staged
+from .systemd       import ExternalExtension, list_deployed, list_staged, refresh_sysexts
 from .repo          import RepoExtension, open_system_repo, find_sysext_refs
 from .extensions    import Extension, DeployState
 
@@ -32,6 +32,8 @@ class MutableExtension(Extension):
         mi = getMountPoint(Path('/', self.root))
         if not self.MUTABLE_BACKING_PATH.joinpath(self.root).exists():
             return DeployState.EXTERNAL
+        if mi is None:
+            return DeployState.INACTIVE
         if 'rw' in mi.options:
             return DeployState.ACTIVE
 
@@ -55,7 +57,7 @@ class MutableExtension(Extension):
     def undeploy(self):
         if self.get_state() == DeployState.EXTERNAL:
             raise ValueError("Cannot undeploy an external mutable!")
-        self.MUTABLE_DEPLOY_PATH.join(self.root).unlink()
+        self.MUTABLE_DEPLOY_PATH.joinpath(self.root).unlink()
 
 
 def list_sysexts() -> list[Extension]:
@@ -92,7 +94,7 @@ def list_mutables() -> list[MutableExtension]:
                 exts.append(MutableExtension(mut.name))
     if backing.exists():
         for mut in backing.iterdir():
-            if mut.name not in [x.get_id() for x in exts]:
+            if mut.name not in [x.root for x in exts] and not mut.name.startswith('.'):
                 exts.append(MutableExtension(mut.name))
     return exts
 

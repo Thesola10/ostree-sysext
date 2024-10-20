@@ -34,8 +34,8 @@ def list_staged() -> dict[str,str]:
         staged[ext['name']] = ext['path']
     return staged
 
-def refresh_sysexts():
-    subprocess.run(SYSTEMD_SYSEXT_COMMAND + [ "refresh" ])
+def refresh_sysexts(*args):
+    subprocess.run(SYSTEMD_SYSEXT_COMMAND + [ "refresh" ] + list(args))
 
 class ExternalExtension(Extension):
     root: str

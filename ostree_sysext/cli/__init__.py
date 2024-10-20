@@ -9,7 +9,7 @@ from rich.console       import Console
 from rich.logging       import RichHandler
 
 from ..                 import __version__
-from .commands          import list_command, deploy, add_remove
+from .commands          import list_command, deploy, add_remove, mutate
 from ..dbus             import dbus_main
 
 cons = Console()
@@ -63,7 +63,7 @@ def _list(**kwargs):
 
 
 @main.command('add', help='Import a system extension without deploying it')
-@click.argument('sysext', nargs=-1, required=True)
+@click.argument('ref', nargs=-1, required=True)
 @_use_common_group
 def _add(**kwargs):
     add_remove._add(cons, **kwargs)
@@ -96,7 +96,7 @@ def _rollback(**kwargs):
 @main.command("mutate", help='Make a system directory read/write')
 @_use_common_group
 def _mutate(**kwargs):
-    logging.warn("mutate")
+    mutate._cmd(cons, **kwargs)
 
 @main.command("build", help='Build a system extension from a Containerfile')
 @_use_common_group
