@@ -47,8 +47,10 @@ class MutableExtension(Extension):
     def deploy(self):
         if self.get_state() == DeployState.EXTERNAL:
             raise ValueError("Cannot deploy an external mutable!")
+        if not self.MUTABLE_DEPLOY_PATH.exists():
+            self.MUTABLE_DEPLOY_PATH.mkdir()
         os.symlink(Path('..','ostree-sysext','mutable',self.root),
-                   self.MUTABLE_DEPLOY_PATH)
+                   self.MUTABLE_DEPLOY_PATH.joinpath(self.root))
 
     def undeploy(self):
         if self.get_state() == DeployState.EXTERNAL:
@@ -90,7 +92,7 @@ def list_mutables() -> list[MutableExtension]:
                 exts.append(MutableExtension(mut.name))
     if backing.exists():
         for mut in backing.iterdir():
-            if mut.name not in [x.name for x in exts]:
+            if mut.name not in [x.get_id() for x in exts]:
                 exts.append(MutableExtension(mut.name))
     return exts
 

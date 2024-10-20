@@ -9,7 +9,7 @@ from rich.console       import Console
 from rich.logging       import RichHandler
 
 from ..                 import __version__
-from .commands          import list_command
+from .commands          import list_command, deploy
 from ..dbus             import dbus_main
 
 cons = Console()
@@ -74,14 +74,16 @@ def _remove(**kwargs):
 
 
 @main.command("deploy", help='Deploy a system extension on top of this system')
+@click.argument('sysext', nargs=-1, required=True)
 @_use_common_group
 def _deploy(**kwargs):
-    logging.warn("deploy")
+    deploy._deploy(cons, **kwargs)
 
 @main.command("undeploy", help='Disable an active system extension')
+@click.argument('sysext', nargs=-1, required=True)
 @_use_common_group
 def _undeploy(**kwargs):
-    logging.warn("undeploy")
+    deploy._undeploy(cons, **kwargs)
 
 
 @main.command("rollback", help='Revert a system extension to a previous version')

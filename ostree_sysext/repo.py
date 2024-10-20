@@ -1,3 +1,4 @@
+import os
 import gi
 
 gi.require_version('OSTree', '1.0')
@@ -9,6 +10,7 @@ from io             import StringIO
 
 from .systemd       import list_staged, list_deployed
 from .extensions    import Extension, DeployState
+from .sandbox       import mount, umount
 
 
 NOFLAGS = Gio.FileQueryInfoFlags.NONE
@@ -120,9 +122,20 @@ class RepoExtension(Extension):
         mypath = self.EXTENSION_PATH.joinpath(self.id, 'deploy')
         if not mypath.joinpath(f'{self.commit}.0').exists():
             checkout_aware(self.repo, self.commit, mypath)
-        os.symlink(self.EXTENSION_PATH.joinpath(f'{self.commit}.0'),
-                   self.DEPLOY_PATH.joinpath(self.id))
+        if composefs_is_enabled(self.repo):
+            self.DEPLOY_PATH.joinpath(self.id).mkdir()
+            mount(str(Path('/', mypath, f'{self.commit}.0', '.ostree.cfs')),
+                  str(self.DEPLOY_PATH.joinpath(self.id)),
+                  'composefs',
+                  f'basedir={self.repo.get_path().get_path()}/objects')
+        else:
+            os.symlink(Path('/', mypath, f'{self.commit}.0'),
+                       self.DEPLOY_PATH.joinpath(self.id))
 
     def undeploy(self):
         # Unmount/unlink from /run/extensions
-        self.DEPLOY_PATH.joinpath(self.id).unlink()
+        if self.DEPLOY_PATH.joinpath(self.id).is_mount():
+            umount(self.DEPLOY_PATH.joinpath(self.id))
+            self.DEPLOY_PATH.joinpath(self.id).rmdir()
+        else:
+            self.DEPLOY_PATH.joinpath(self.id).unlink()
