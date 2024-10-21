@@ -13,10 +13,27 @@ class DeployState(Enum):
     INCOMPAT = 6  # os-release ID mismatch
     OUTDATED = 7  # Version check mismatch
 
+class UpdateState(Enum):
+    AVAIL   = 0 # An update exists and can be applied without issues
+    WARN    = 1 # Update has issues, can be bypassed using --force
+    VETO    = 2 # Update process is impossible, cannot be bypassed
+    UNAVAIL = 3 # No update exists
+    UNKNOWN = 4 # An error occured while checking for updates
+
 class CompatVote(Enum):
     APPROVE = 0 # No objections
     WARN    = 1 # Objection can be bypassed using --force
     VETO    = 2 # Objection cannot be bypassed
+
+class TransactionType(Enum):
+    ADD     = 0 # Add one or more packages to an extension
+    REMOVE  = 1 # Remove one or more packages from an extension
+    UPDATE  = 2 # Build an updated version of the extension
+    USER0   = 128   #
+    USER1   = 129   # Implementation-specific transactions
+    USER2   = 130   #
+    USER3   = 131   #
+
 
 class Extension:
     DEPLOY_PATH = Path('/','run','extensions')
