@@ -10,7 +10,6 @@ dependencies = [
     "rich",
     "PyGObject",
     "python-dotenv",
-    "systemd-python",
     "mntfinder",
     "pydbus"
     ]
