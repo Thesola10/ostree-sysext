@@ -4,6 +4,9 @@
 
 ostree-sysext is currently alpha software, provided as-is with no guarantee.
 
+> [!WARNING]
+> Not everything is implemented! I encourage you to check out [the wiki](https://github.com/thesola10/ostree-sysext/wiki) for the intended design.
+
 ---
 
 `ostree-sysext` is a frontend built on top of [OSTree](https://github.com/ostreedev/ostree) and `systemd`'s [`systemd-sysext` tool](https://www.freedesktop.org/software/systemd/man/latest/systemd-sysext.html).
