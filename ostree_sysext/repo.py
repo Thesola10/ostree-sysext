@@ -29,7 +29,7 @@ def ref_is_sysext(commit) -> bool:
     '''
     usr_lib = commit.out_root.get_child('usr').get_child('lib')
     ext_rel = usr_lib.get_child('extension-release.d')
-    if ext_rel.query_file_type(Gio.FileQueryInfoFlags.NONE) != Gio.FileType.DIRECTORY:
+    if ext_rel.query_file_type(NOFLAGS) != Gio.FileType.DIRECTORY:
         return False    # extension-release.d is missing or not a directory.
 
     rel_files = list(ext_rel.enumerate_children("standard::*", NOFLAGS))
@@ -43,6 +43,20 @@ def ref_is_sysext(commit) -> bool:
     rel_file = ext_rel.get_child(rel_name)
     if rel_file.query_file_type(NOFLAGS) != Gio.FileType.REGULAR:
         return False    # extension-release must be a regular file.
+
+    return True
+
+def ref_is_deployment_set(commit) -> bool:
+    '''Predicate for valid deployset info, given a response object from
+    OSTree.Repo.read_commit()
+    '''
+    staged = commit.out_root.get_child('staged')
+    state = commit.out_root.get_child('state')
+    if staged.query_file_type(NOFLAGS) != Gio.FileType.DIRECTORY:
+        return False    # staged is missing or not a directory.
+
+    if state.query_file_type(NOFLAGS) != Gio.FileType.DIRECTORY or Gio.FileType.UNKNOWN:
+        return False    # state is not a directory.
 
     return True
 
