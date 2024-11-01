@@ -95,6 +95,8 @@ def checkout_aware(repo: OSTree.Repo, ref: str, dest: str):
 class RepoExtension(Extension):
     EXTENSION_PATH = Path('ostree','extensions')
 
+    # TODO: Store builder as commit metadata for updating
+
     repo: OSTree.Repo
     commit: str
     root: OSTree.RepoFile
@@ -133,6 +135,7 @@ class RepoExtension(Extension):
 
     def deploy(self):
         # Mount (composefs) or symlink into /run/extensions
+        # TODO: Retire in favor of deployment.DeploymentSet
         mypath = self.EXTENSION_PATH.joinpath(self.id, 'deploy')
         if not mypath.joinpath(f'{self.commit}.0').exists():
             checkout_aware(self.repo, self.commit, mypath)

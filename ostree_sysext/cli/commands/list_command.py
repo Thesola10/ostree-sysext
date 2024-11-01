@@ -20,30 +20,6 @@ table_states = {
     DeployState.OUTDATED: Text("outdated",  style="red bold")
 }
 
-class DummyExtension(Extension):
-    state: DeployState
-    id: str
-    name: str
-    version: str
-
-    def __init__(self, id, name, version, state):
-        self.id = id
-        self.name = name
-        self.version = version
-        self.state = state
-
-    def get_state(self):
-        return self.state
-
-    def get_id(self):
-        return self.id
-
-    def get_name(self):
-        return self.name
-
-    def get_version(self):
-        return self.version
-
 def print_extension(tb: Table, ext: Extension):
     tb.add_row(ext.get_id(), ext.get_name(), ext.get_version(), table_states[ext.get_state()])
 
@@ -65,5 +41,4 @@ def _cmd(console: Console, **args):
 
     tb.add_row()
 
-#    print_extension(tb, DummyExtension("initramfs", "Locally built initramfs", "2ac7148d", DeployState.ACTIVE))
     console.print(tb)

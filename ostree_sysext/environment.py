@@ -9,6 +9,7 @@ from pathlib        import Path
 from .systemd       import ExternalExtension, list_deployed, list_staged, refresh_sysexts
 from .repo          import RepoExtension, open_system_repo, find_sysext_refs
 from .extensions    import Extension, DeployState
+from .deployment    import DeploymentSet
 
 
 class MutableExtension(Extension):
@@ -97,4 +98,16 @@ def list_mutables() -> list[MutableExtension]:
             if mut.name not in [x.root for x in exts] and not mut.name.startswith('.'):
                 exts.append(MutableExtension(mut.name))
     return exts
+
+def get_current_deployment() -> DeploymentSet:
+    '''Return the DeploymentSet for the active commit found under /run/ostree/extensions
+    '''
+    deployset = Path('run','ostree','extensions')
+    if not deployset.exists():
+        return None
+    if not deployset.is_symlink():
+        raise ValueError("/run/ostree/extensions must be a symbolic link")
+
+    commit = deployset.readlink().name[:-2]
+    return DeploymentSet(open_system_repo(Path('ostree')), commit)
 

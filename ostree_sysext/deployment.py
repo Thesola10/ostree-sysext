@@ -19,8 +19,7 @@ class DeploymentSet:
     # Hash of properties to invalidate ref
     digest: int
 
-    def __init__(self, repo: OSTree.Repo,
-                 ref: str = None,
+    def __init__(self, repo: OSTree.Repo, ref: str = None,
                  root: OSTree.Deployment = None,
                  exts: list[RepoExtension] = None):
         '''Construct a DeploymentSet.
@@ -55,15 +54,28 @@ class DeploymentSet:
         else:
             raise ValueError("ref cannot be specified alongside root and exts")
 
+    def _is_committed(self) -> bool:
+        if self.ref is None:
+            return False
+        if hash(tuple(self.exts)) != self.digest:
+            return False
+        return True
+
     def commit(self) -> str:
         '''Write and pin an OSTree commit for the given deployment state
         '''
+        # 1. Invoke compatibility survey
+        # 2. Invoke deploy finish survey
+        # 3. Commit result to OSTree
         pass
 
     def apply(self):
         '''Apply and replace the current deployment set with this one.
         Will also update /run/extensions.
         '''
+        # 1. Invoke compatibility survey
+        # 2. Link checkout to /run/ostree/extensions
+        # 3. Replace extension set in /run/extensions with /run/ostree/extensions/staged
         pass
 
     def get_extensions(self) -> list[RepoExtension]:
