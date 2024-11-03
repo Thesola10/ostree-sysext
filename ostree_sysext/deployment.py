@@ -61,20 +61,22 @@ class DeploymentSet:
             return False
         return True
 
-    def commit(self) -> str:
+    def commit(self, force = False) -> str:
         '''Write and pin an OSTree commit for the given deployment state
         '''
         # 1. Invoke compatibility survey
+        survey_compatible(root, exts, force)
         # 2. Invoke deploy finish survey
         # 3. Commit result to OSTree
         pass
 
-    def apply(self):
+    def apply(self, force = False):
         '''Apply and replace the current deployment set with this one.
         Will also update /run/extensions.
         '''
         # 1. Invoke compatibility survey
-        # 2. Link checkout to /run/ostree/extensions
+        survey_compatible(root, exts, force)
+        # 2. Link checkout to /run/ostree/extensions (and to deploy/xxx.0.extensions)
         # 3. Replace extension set in /run/extensions with /run/ostree/extensions/staged
         pass
 

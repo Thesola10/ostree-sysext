@@ -1,12 +1,14 @@
 import os
 import pwd
-import errno
 
 from ctypes         import CDLL, POINTER, Structure, c_char_p, c_int, c_uint32, c_ulong, c_size_t, get_errno
 from ctypes.util    import find_library
 from typing         import Callable
 from pathlib        import Path
 from logging        import error
+from tempfile       import mkdtemp
+from functools      import reduce
+from sys            import exit
 
 
 libc = CDLL(find_library('c'), use_errno=True)
@@ -31,11 +33,13 @@ class CFSOpts(Structure):
 
 def mount(what, where, fs, opts):
     if libc.mount(what.encode(), where.encode(), fs.encode(), 0, opts.encode()):
-        error(f"mount({where}): {errno.errorcode[get_errno()]}")
+        error(f"mount({where}): {os.strerror(get_errno())}")
+        raise OSError(get_errno())
 
 def umount(what):
     if libc.umount(str(what).encode()):
-        error(f"umount({what}): {errno.errorcode[get_errno()]}")
+        error(f"umount({what}): {os.strerror(get_errno())}")
+        raise OSError(get_errno())
 
 def mount_composefs(img, where, opts: CFSOpts):
     libcfs = CDLL(find_library('composefs'), use_errno=True)
@@ -61,16 +65,47 @@ def edit_sysroot(fn: Callable):
         exit(fn())
     pass
 
-def edit_sandbox(fn: Callable, layers: list[Path], upper: Path):
+def edit_sandbox(fn: Callable, layers: list[Path], upper: Path, work: Path):
     '''Run a process in the given layered set sandbox.
     Useful for building or editing a sysext.
     '''
-    boxuser = pwd.getpwnam("ostree-sysext")
     child = os.fork()
     if child > 0:
         return os.waitpid(child, 0)
     else:
+        myuser = os.getuid()
+        if myuser == 0:
+            boxuser = pwd.getpwnam("ostree-sysext")
+            os.setuid(boxuser)
+            myuser = boxuser
+        os.unshare(os.CLONE_NEWUSER)
+
+        with open("/proc/self/setgroups", "w") as sg:
+            sg.write("deny")
+
+        umap = open("/proc/self/uid_map", "w")
+        gmap = open("/proc/self/gid_map", "w")
+
+        umap.write(f"0 {myuser} 1")
+        gmap.write(f"0 {myuser} 1")
+
+        umap.close()
+        gmap.close()
+
         os.unshare(os.CLONE_NEWNS|os.CLONE_NEWPID)
-        # then su as ostree-sysext and unshare(CLONE_NEWUSER)
+
+        tgt = mkdtemp(prefix="ostree-sysext-")
+        lower = reduce(lambda l, r: f"{str(l)}:{str(r)}", layers)
+        mount("ostree-sysext", tgt, "overlay",
+              f"lowerdir={lower},upperdir={str(upper)},workdir={str(work)},userxattr")
+        os.chroot(tgt)
+
+        # we need to be a child of our NEWPID ns to mount /proc
+        mt = os.fork()
+        if mt > 0:
+            os.waitpid(mt, 0)
+        else:
+            mount("proc", "/proc", "proc", "")
+        exit(fn())
 
     pass
