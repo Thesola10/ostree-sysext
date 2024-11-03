@@ -15,6 +15,7 @@ libc = CDLL(find_library('c'), use_errno=True)
 libc.mount.argtypes = (c_char_p, c_char_p, c_char_p, c_ulong, c_char_p)
 libc.umount.argtypes = (c_char_p,)
 
+MS_RDONLY = 1
 MS_REMOUNT = 32
 MS_BIND = 4096
 
@@ -107,11 +108,15 @@ def edit_sandbox(fn: Callable, layers: list[Path], \
         else:
             opt = f"lowerdir={lower},upperdir={str(upper)},workdir={str(work)},userxattr"
         mount("ostree-sysext", tgt, "overlay", opt)
+        mount("tmpfs", f"{tgt}/run", "tmpfs", "")
+        mount("tmpfs", f"{tgt}/tmp", "tmpfs", "")
 
         if binds is not None:
             for k, v in binds.items():
                 where = Path(tgt).joinpath(v.parts[1:])
-                if libc.mount(str(k).encode(), str(where).encode(), b"", MS_BIND, b""):
+                if not where.exists():
+                    where.mkdir()
+                if libc.mount(str(k).encode(), str(where).encode(), b"none", MS_BIND, b""):
                     error(f"mount({v}): {os.strerror(get_errno())}")
                     exit(2)
         os.chroot(tgt)

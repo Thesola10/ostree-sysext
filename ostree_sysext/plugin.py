@@ -34,7 +34,8 @@ def survey_deploy_finish(root: OSTree.Deployment, exts: list[Extension], tgt: Pa
     and will be committed after all hooks finish.
     '''
     for plugin in _import_plugins('/usr/lib/ostree-sysext/plugins'):
-        binds = { tgt: Path('/','run','ostree','extensions') }
+        binds = { tgt: Path('/','run','ostree','extensions'),
+                 Path('/', 'sysroot'): Path('/', 'sysroot') }
         res, msg = _call_sandbox(plugin.deploy_finish, root, exts, binds)
         if res == CompatVote.WARN and force:
             warn(f"{plugin.__name__}: {msg}")
