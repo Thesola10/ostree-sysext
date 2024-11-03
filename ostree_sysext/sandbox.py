@@ -45,7 +45,7 @@ def mount_composefs(img, where, opts: CFSOpts):
     libcfs = CDLL(find_library('composefs'), use_errno=True)
     libcfs.lcfs_mount_image.argtypes = (c_char_p, c_char_p, CFSOpts)
     if libcfs.lcfs_mount_image(img.encode(), where.encode(), opts):
-        error(f"lcfs_mount_image({where}): {errno.errorcode[get_errno()]}")
+        error(f"lcfs_mount_image({where}): {os.strerror(get_errno())}")
 
 
 def edit_sysroot(fn: Callable):
@@ -60,18 +60,23 @@ def edit_sysroot(fn: Callable):
         if os.getcwd() != '/':
             os.chroot(os.getcwd())
         if libc.mount(b"", str(Path('/','sysroot')).encode(), b"", MS_REMOUNT|MS_BIND, b""):
-            error(f"mount(/sysroot): {errno.errorcode[get_errno()]}")
-            exit(1)
+            error(f"mount(/sysroot): {os.strerror(get_errno())}")
+            exit(2)
         exit(fn())
     pass
 
-def edit_sandbox(fn: Callable, layers: list[Path], upper: Path, work: Path):
+def edit_sandbox(fn: Callable, layers: list[Path], \
+                 upper: Path = None, work: Path = None, binds: dict[Path,Path] = None) \
+        -> tuple[int, str]:
     '''Run a process in the given layered set sandbox.
     Useful for building or editing a sysext.
     '''
     child = os.fork()
+    r_fd, w_fd = os.pipe()
     if child > 0:
-        return os.waitpid(child, 0)
+        os.close(w_fd)
+        pid, ret = os.waitpid(child, 0)
+        return ret, os.read(r_fd, 1024).decode()
     else:
         myuser = os.getuid()
         if myuser == 0:
@@ -96,8 +101,19 @@ def edit_sandbox(fn: Callable, layers: list[Path], upper: Path, work: Path):
 
         tgt = mkdtemp(prefix="ostree-sysext-")
         lower = reduce(lambda l, r: f"{str(l)}:{str(r)}", layers)
-        mount("ostree-sysext", tgt, "overlay",
-              f"lowerdir={lower},upperdir={str(upper)},workdir={str(work)},userxattr")
+        opt = ""
+        if (upper is None) and (work is None):
+            opt = f"lowerdir={lower},userxattr"
+        else:
+            opt = f"lowerdir={lower},upperdir={str(upper)},workdir={str(work)},userxattr"
+        mount("ostree-sysext", tgt, "overlay", opt)
+
+        if binds is not None:
+            for k, v in binds.items():
+                where = Path(tgt).joinpath(v.parts[1:])
+                if libc.mount(str(k).encode(), str(where).encode(), b"", MS_BIND, b""):
+                    error(f"mount({v}): {os.strerror(get_errno())}")
+                    exit(2)
         os.chroot(tgt)
 
         # we need to be a child of our NEWPID ns to mount /proc
@@ -106,6 +122,9 @@ def edit_sandbox(fn: Callable, layers: list[Path], upper: Path, work: Path):
             os.waitpid(mt, 0)
         else:
             mount("proc", "/proc", "proc", "")
-        exit(fn())
+        os.close(r_fd)
+        ret, msg = fn()
+        write(w_fd, msg)
+        exit(ret)
 
     pass

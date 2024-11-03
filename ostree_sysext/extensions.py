@@ -62,6 +62,9 @@ class Extension:
     def get_state(self):
         return DeployState.EXTERNAL
 
+    def get_root(self):
+        raise NotImplemented()
+
     def deploy(self):
         raise NotImplemented()
 

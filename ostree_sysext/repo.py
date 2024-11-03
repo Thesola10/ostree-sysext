@@ -133,6 +133,12 @@ class RepoExtension(Extension):
     def get_rel_info(self):
         return self.rel_info
 
+    def get_root(self) -> Path:
+        mypath = self.EXTENSION_PATH.joinpath(self.id, 'deploy')
+        if not mypath.joinpath(f'{self.commit}.0').exists():
+            checkout_aware(self.repo, self.commit, mypath)
+        return mypath
+
     def deploy(self):
         # Mount (composefs) or symlink into /run/extensions
         # TODO: Retire in favor of deployment.DeploymentSet

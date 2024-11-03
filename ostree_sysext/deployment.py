@@ -3,6 +3,7 @@ import os
 from gi.repository  import Gio, OSTree
 from logging        import warn, error
 from pathlib        import Path
+from tempfile       import mkdtemp
 
 from .repo          import RepoExtension, open_system_repo, ref_is_deployment_set, NOFLAGS
 from .extensions    import Extension, DeployState
@@ -64,11 +65,21 @@ class DeploymentSet:
     def commit(self, force = False) -> str:
         '''Write and pin an OSTree commit for the given deployment state
         '''
-        # 1. Invoke compatibility survey
-        survey_compatible(root, exts, force)
-        # 2. Invoke deploy finish survey
-        # 3. Commit result to OSTree
-        pass
+        if self._is_committed():
+            return self.ref
+
+        tgt = mkdtemp(prefix="ostree-sysext-")
+        survey_compatible(self.root, self.exts, force)
+
+        Path(tgt, 'staged').mkdir()
+        for ext in self.exts:
+            Path(tgt, 'staged', ext.get_id()).symlink_to(f"/{ext.get_root()}")
+
+        Path(tgt, 'state').mkdir()
+        survey_deploy_finish(self.root, self.exts, tgt, force)
+
+        # TODO: Commit path and return ref instead
+        return tgt
 
     def apply(self, force = False):
         '''Apply and replace the current deployment set with this one.
