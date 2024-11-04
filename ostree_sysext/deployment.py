@@ -5,7 +5,7 @@ from logging        import warn, error
 from pathlib        import Path
 from tempfile       import mkdtemp
 
-from .repo          import RepoExtension, open_system_repo, ref_is_deployment_set, NOFLAGS
+from .repo          import RepoExtension, open_system_repo, ref_is_deployment_set, commit_dir, NOFLAGS
 from .extensions    import Extension, DeployState
 from .plugin        import survey_compatible, survey_deploy_finish
 
@@ -36,10 +36,11 @@ class DeploymentSet:
             self.exts = exts
 
         elif root is None and exts is None:
-            self.ref = ref
             self.exts = []
             commit = repo.read_commit(ref)
             assert ref_is_deployment_set(commit)
+
+            self.ref = commit.out_commit
 
             staged = commit.out_root.get_child('staged')
             staged_files = list(staged.enumerate_children("standard::*", NOFLAGS))
@@ -78,8 +79,9 @@ class DeploymentSet:
         Path(tgt, 'state').mkdir()
         survey_deploy_finish(self.root, self.exts, tgt, force)
 
-        # TODO: Commit path and return ref instead
-        return tgt
+        self.ref = commit_dir(self.repo, tgt, parent=self.ref)
+        self.digest = hash(tuple(self.exts))
+        return self.ref
 
     def apply(self, force = False):
         '''Apply and replace the current deployment set with this one.

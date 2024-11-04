@@ -10,7 +10,7 @@ from io             import StringIO
 
 from .systemd       import list_staged, list_deployed
 from .extensions    import Extension, DeployState
-from .sandbox       import mount, umount
+from .sandbox       import mount, umount, edit_sysroot
 
 
 NOFLAGS = Gio.FileQueryInfoFlags.NONE
@@ -91,6 +91,20 @@ def checkout_aware(repo: OSTree.Repo, ref: str, dest: str):
     if composefs_is_enabled():
         repo.checkout_composefs(None, None, str(destpath.joinpath('.ostree.cfs')), commit)
 
+def commit_dir(repo: OSTree.Repo, dir: Path, parent: str = None, \
+        subject: str = None, body: str = None, meta: dict = None) -> str:
+    '''Copy and commit a given directory into an OSTree ref
+    '''
+    repo.prepare_transaction()
+    mtree = OSTree.MutableTree()
+    repo.write_directory_to_mtree(Gio.File.new_for_path(str(dir)), mtree)
+
+    act = lambda: (0, repo.write_commit(parent, subject, body, meta, repo.write_mtree(mtree)))
+    ret, val = edit_sysroot(act)
+    if ret == 0:
+        return val
+    else:
+        raise OSError(ret)
 
 class RepoExtension(Extension):
     EXTENSION_PATH = Path('ostree','extensions')

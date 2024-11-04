@@ -49,13 +49,17 @@ def mount_composefs(img, where, opts: CFSOpts):
         error(f"lcfs_mount_image({where}): {os.strerror(get_errno())}")
 
 
-def edit_sysroot(fn: Callable):
+def edit_sysroot(fn: Callable) -> tuple[int, str]:
     '''Run a process in the bare root with read/write access.
     Useful for working on an OSTree deployment root.
+    Requires root privileges.
     '''
     child = os.fork()
+    r_fd, w_fd = os.pipe()
     if child > 0:
-        return os.waitpid(child, 0)
+        os.close(w_fd)
+        pid, ret = os.waitpid(child, 0)
+        return ret, os.read(r_fd, 1024).decode()
     else:
         os.unshare(os.CLONE_NEWNS|os.CLONE_NEWPID)
         if os.getcwd() != '/':
@@ -63,7 +67,11 @@ def edit_sysroot(fn: Callable):
         if libc.mount(b"", str(Path('/','sysroot')).encode(), b"", MS_REMOUNT|MS_BIND, b""):
             error(f"mount(/sysroot): {os.strerror(get_errno())}")
             exit(2)
-        exit(fn())
+
+        os.close(r_fd)
+        ret, msg = fn()
+        write(w_fd, msg)
+        exit(ret)
     pass
 
 def edit_sandbox(fn: Callable, layers: list[Path], \
@@ -71,6 +79,7 @@ def edit_sandbox(fn: Callable, layers: list[Path], \
         -> tuple[int, str]:
     '''Run a process in the given layered set sandbox.
     Useful for building or editing a sysext.
+    Will discard root privileges.
     '''
     child = os.fork()
     r_fd, w_fd = os.pipe()
