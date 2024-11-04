@@ -10,7 +10,7 @@ from io             import StringIO
 
 from .systemd       import list_staged, list_deployed
 from .extensions    import Extension, DeployState
-from .sandbox       import mount, umount, edit_sysroot
+from .sandbox       import mount, umount
 
 
 NOFLAGS = Gio.FileQueryInfoFlags.NONE
@@ -101,6 +101,15 @@ def commit_dir(repo: OSTree.Repo, dir: Path, parent: str = None, \
 
     act = lambda: (0, repo.write_commit(parent, subject, body, meta, repo.write_mtree(mtree)))
     ret, val = edit_sysroot(act)
+    if ret == 0:
+        return val
+    else:
+        raise OSError(ret)
+
+def pin_ref(repo: OSTree.Repo, commit: str, ref: str):
+    '''Take a commit hash and pin it to a branch
+    '''
+    ret, val = edit_sysroot(repo.set_ref_immediate(None, ref, commit))
     if ret == 0:
         return val
     else:

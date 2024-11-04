@@ -39,7 +39,7 @@ def _undeploy(console: Console, **args):
         if ex.get_state() == DeployState.INACTIVE:
             warn(f"Extension '{ex.get_id()}' is already inactive.")
             continue
-        if type(ex) is MutableExtension
+        if type(ex) is MutableExtension:
             ex.undeploy()
         else:
             ds.exts.remove(ex)

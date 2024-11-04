@@ -5,7 +5,7 @@ from logging        import warn, error
 from pathlib        import Path
 from tempfile       import mkdtemp
 
-from .repo          import RepoExtension, open_system_repo, ref_is_deployment_set, commit_dir, NOFLAGS
+from .repo          import RepoExtension, open_system_repo, ref_is_deployment_set, commit_dir, pin_ref, checkout_aware, NOFLAGS
 from .extensions    import Extension, DeployState
 from .plugin        import survey_compatible, survey_deploy_finish
 
@@ -15,7 +15,6 @@ class DeploymentSet:
     repo: OSTree.Repo
     root: OSTree.Deployment
     ref: str
-    mtree: OSTree.MutableTree
 
     # Hash of properties to invalidate ref
     digest: int
@@ -81,6 +80,7 @@ class DeploymentSet:
 
         self.ref = commit_dir(self.repo, tgt, parent=self.ref)
         self.digest = hash(tuple(self.exts))
+        # TODO: flip-flop ref pin @ ostree-sysext/osname/<deploy>/<ext>
         return self.ref
 
     def apply(self, force = False):
