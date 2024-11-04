@@ -6,11 +6,12 @@ from logging        import debug, error, warn
 from ..common       import find_sysext_by_ids
 from ...extensions  import DeployState, Extension
 from ...systemd     import refresh_sysexts
+from ...deployment  import DeploymentSet
+from ...environment import get_current_deployment
 
 
 def _deploy(console: Console, **args):
-    # TODO: Retire Extension.deploy() in favor of deployment.DeploymentSet
-    warn("This is a naive implementation and is subject to change.")
+    ds = get_current_deployment()
 
     for ex in find_sysext_by_ids(args['sysext']):
         if ex.get_state() == DeployState.EXTERNAL:
@@ -19,11 +20,17 @@ def _deploy(console: Console, **args):
         if ex.get_state() == DeployState.ACTIVE:
             warn(f"Extension '{ex.get_id()}' is already active.")
             continue
-        ex.deploy()
-    refresh_sysexts('--mutable=auto')
+        if type(ex) is MutableExtension:
+            ex.deploy()
+        else:
+            ds.exts.append(ex)
+
+    ds.commit()
+    ds.apply()
+    refresh_sysexts('--mutable=auto') # TODO: track auto vs imported
 
 def _undeploy(console: Console, **args):
-    warn("This is a naive implementation and is subject to change")
+    ds = get_current_deployment()
 
     for ex in find_sysext_by_ids(args['sysext']):
         if ex.get_state() == DeployState.EXTERNAL:
@@ -32,5 +39,11 @@ def _undeploy(console: Console, **args):
         if ex.get_state() == DeployState.INACTIVE:
             warn(f"Extension '{ex.get_id()}' is already inactive.")
             continue
-        ex.undeploy()
+        if type(ex) is MutableExtension
+            ex.undeploy()
+        else:
+            ds.exts.remove(ex)
+
+    ds.commit()
+    ds.apply()
     refresh_sysexts('--mutable=auto')
