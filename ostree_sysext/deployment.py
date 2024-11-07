@@ -8,7 +8,7 @@ from tempfile       import mkdtemp
 from .repo          import RepoExtension, open_system_repo, ref_is_deployment_set, commit_dir, pin_ref, checkout_aware, deploy_aware, NOFLAGS
 from .extensions    import Extension, DeployState
 from .plugin        import survey_compatible, survey_deploy_finish
-from .sandbox       import umount
+from .sandbox       import umount, edit_sysroot
 
 
 class DeploymentSet:
@@ -36,6 +36,7 @@ class DeploymentSet:
         if ref is None:
             self.root = root
             self.exts = exts
+            self.ref = None
 
         elif root is None and exts is None:
             self.exts = []
@@ -81,7 +82,10 @@ class DeploymentSet:
         Path(tgt, 'state').mkdir()
         survey_deploy_finish(self.root, self.exts, tgt, force)
 
-        self.ref = commit_dir(self.repo, tgt, parent=self.ref)
+        err, ref = edit_sysroot(lambda: (0, commit_dir(self.repo, tgt, parent=self.ref)))
+        if err:
+            raise OSError(err)
+        self.ref = ref
         self.digest = hash(tuple(self.exts))
         # TODO: flip-flop ref pin @ ostree-sysext/osname/<deploy>/<ext>
         return self.ref
@@ -90,7 +94,7 @@ class DeploymentSet:
         '''Apply and replace the current deployment set with this one.
         Will also update /run/extensions.
         '''
-        survey_compatible(root, exts, force)
+        survey_compatible(self.root, self.exts, force)
 
         dep_space = Path('ostree', 'deploy', self.root.get_osname(), 'extensions', 'deploy')
         deploy_aware(self.repo, self.ref, dep_space, self.DEPLOY_PATH)

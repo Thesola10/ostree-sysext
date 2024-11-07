@@ -111,16 +111,14 @@ def commit_dir(repo: OSTree.Repo, dir: Path, parent: str = None, \
         subject: str = None, body: str = None, meta: dict = None) -> str:
     '''Copy and commit a given directory into an OSTree ref
     '''
-    repo.prepare_transaction()
+    wr = OSTree.Repo.new(repo.get_path())
+    wr.open()
+    wr.prepare_transaction()
     mtree = OSTree.MutableTree()
-    repo.write_directory_to_mtree(Gio.File.new_for_path(str(dir)), mtree)
-
-    act = lambda: (0, repo.write_commit(parent, subject, body, meta, repo.write_mtree(mtree)))
-    ret, val = edit_sysroot(act)
-    if ret == 0:
-        return val
-    else:
-        raise OSError(ret)
+    wr.write_directory_to_mtree(Gio.File.new_for_path(str(dir)), mtree)
+    done, mr = wr.write_mtree(mtree)
+    done, ref = wr.write_commit(parent, subject, body, meta, mr)
+    return ref
 
 def pin_ref(repo: OSTree.Repo, commit: str, ref: str):
     '''Take a commit hash and pin it to a branch

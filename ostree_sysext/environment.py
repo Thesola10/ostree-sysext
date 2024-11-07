@@ -105,9 +105,14 @@ def get_current_deployment() -> DeploymentSet:
     deployset = Path('run','ostree','extensions')
     if not deployset.exists():
         return None
-    if not deployset.is_symlink():
+    if deployset.is_symlink():
+        commit = deployset.readlink().name[:-2]
+    elif deployset.is_mount():
+        mp = getMountPoint(str(deployset))
+        lower = list(filter(lambda o: o.startswith('lowerdir+='), mi.options))[0]
+        commit = Path(lower).name[:-2]
+    else:
         raise ValueError("/run/ostree/extensions must be a symbolic link")
 
-    commit = deployset.readlink().name[:-2]
     return DeploymentSet(open_system_repo(Path('ostree')), commit)
 

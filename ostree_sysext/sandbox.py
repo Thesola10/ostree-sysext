@@ -57,7 +57,7 @@ def mount_composefs(img, where, verity: bytes = None, idmap: Path = None):
         idmap_fd = os.open(str(idmap))
     opts = CFSOpts([b"/ostree/repo/objects"], 1,
                    None, None, verity, flags,
-                   idmap_fd, None, None, None)
+                   idmap_fd, f"/tmp/{str(img)}".encode(), None, None)
 
     if libcfs.lcfs_mount_image(str(img).encode(), str(where).encode(), opts):
         error(f"lcfs_mount_image({where}): {os.strerror(get_errno())}")
@@ -85,7 +85,7 @@ def edit_sysroot(fn: Callable) -> tuple[int, str]:
 
         os.close(r_fd)
         ret, msg = fn()
-        write(w_fd, msg)
+        os.write(w_fd, msg.encode())
         exit(ret)
     pass
 

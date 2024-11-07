@@ -2,16 +2,24 @@ import os
 
 from rich.console   import Console
 from logging        import debug, error, warn
+from pathlib        import Path
+from gi.repository  import OSTree, Gio
 
 from ..common       import find_sysext_by_ids
 from ...extensions  import DeployState, Extension
 from ...systemd     import refresh_sysexts
 from ...deployment  import DeploymentSet
-from ...environment import get_current_deployment
+from ...repo        import open_system_repo
+from ...environment import MutableExtension, get_current_deployment
 
 
 def _deploy(console: Console, **args):
     ds = get_current_deployment()
+    if ds is None:
+        repo = open_system_repo(Path('ostree'))
+        sr = OSTree.Sysroot()
+        sr.load()
+        ds = DeploymentSet(repo, root=sr.get_booted_deployment(), exts=[])
 
     for ex in find_sysext_by_ids(args['sysext']):
         if ex.get_state() == DeployState.EXTERNAL:
