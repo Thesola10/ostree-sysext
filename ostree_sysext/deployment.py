@@ -5,12 +5,15 @@ from logging        import warn, error
 from pathlib        import Path
 from tempfile       import mkdtemp
 
-from .repo          import RepoExtension, open_system_repo, ref_is_deployment_set, commit_dir, pin_ref, checkout_aware, NOFLAGS
+from .repo          import RepoExtension, open_system_repo, ref_is_deployment_set, commit_dir, pin_ref, checkout_aware, deploy_aware, NOFLAGS
 from .extensions    import Extension, DeployState
 from .plugin        import survey_compatible, survey_deploy_finish
+from .sandbox       import umount
 
 
 class DeploymentSet:
+    DEPLOY_PATH = Path('/','run','ostree','extensions')
+
     exts: list[RepoExtension]
     repo: OSTree.Repo
     root: OSTree.Deployment
@@ -87,11 +90,27 @@ class DeploymentSet:
         '''Apply and replace the current deployment set with this one.
         Will also update /run/extensions.
         '''
-        # 1. Invoke compatibility survey
         survey_compatible(root, exts, force)
-        # 2. Link checkout to /run/ostree/extensions (and to deploy/xxx.0.extensions)
-        # 3. Replace extension set in /run/extensions with /run/ostree/extensions/staged
-        pass
+
+        dep_space = Path('ostree', 'deploy', self.root.get_osname(), 'extensions', 'deploy')
+        deploy_aware(self.repo, self.ref, dep_space, self.DEPLOY_PATH)
+
+        for ent in Extension.DEPLOY_PATH.iterdir():
+            if ent.is_mount():
+                umount(str(ent))
+                ent.rmdir()
+            elif ent.is_symlink():
+                ent.unlink()
+            else:
+                raise ValueError(f"Found {str(ent)}, which is neither a mount nor a symlink.")
+        for ext in self.exts:
+            dep_ext = ext.EXTENSION_PATH.joinpath(ext.get_id(), 'deploy')
+            deploy_aware(self.repo, ext.commit, dep_ext, ext.DEPLOY_PATH.joinpath(ext.get_id()))
+
+        sr = OSTree.Sysroot()
+        sr.load()
+        dep = sr.get_deployment_dirpath(self.root)
+        os.symlink(f'../extensions/deploy/{self.ref}.0', f'{dep}.extensions')
 
     def get_extensions(self) -> list[RepoExtension]:
         return self.exts

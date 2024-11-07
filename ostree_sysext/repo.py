@@ -91,6 +91,22 @@ def checkout_aware(repo: OSTree.Repo, ref: str, dest: str):
     if composefs_is_enabled():
         repo.checkout_composefs(None, None, str(destpath.joinpath('.ostree.cfs')), commit)
 
+def deploy_aware(repo: OSTree.Repo, ref: str, prefix: Path, dest: Path):
+    '''Perform checkout checks, and deploy ref to target directory while
+    applying composefs if present.
+    '''
+    local, _r, commit = repo.read_commit(ref)
+    coutpath = Path(prefix, f'{commit}.0')
+    if not coutpath.exists():
+        checkout_aware(repo, ref, prefix)
+    if coutpath.joinpath('.ostree.cfs').exists():
+        dest.mkdir(parents=True, exist_ok=True)
+        mount_composefs(coutpath.joinpath('.ostree.cfs'), dest)
+    else:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        os.symlink(str(coutpath), str(dest))
+
+
 def commit_dir(repo: OSTree.Repo, dir: Path, parent: str = None, \
         subject: str = None, body: str = None, meta: dict = None) -> str:
     '''Copy and commit a given directory into an OSTree ref
@@ -166,17 +182,7 @@ class RepoExtension(Extension):
         # Mount (composefs) or symlink into /run/extensions
         # TODO: Retire in favor of deployment.DeploymentSet
         mypath = self.EXTENSION_PATH.joinpath(self.id, 'deploy')
-        if not mypath.joinpath(f'{self.commit}.0').exists():
-            checkout_aware(self.repo, self.commit, mypath)
-        if composefs_is_enabled(self.repo):
-            self.DEPLOY_PATH.joinpath(self.id).mkdir()
-            mount(str(Path('/', mypath, f'{self.commit}.0', '.ostree.cfs')),
-                  str(self.DEPLOY_PATH.joinpath(self.id)),
-                  'composefs',
-                  f'basedir={self.repo.get_path().get_path()}/objects')
-        else:
-            os.symlink(Path('/', mypath, f'{self.commit}.0'),
-                       self.DEPLOY_PATH.joinpath(self.id))
+        deploy_aware(self.repo, self.commit, mypath, self.DEPLOY_PATH.joinpath(self.id))
 
     def undeploy(self):
         # Unmount/unlink from /run/extensions

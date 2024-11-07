@@ -15,10 +15,14 @@ libc = CDLL(find_library('c'), use_errno=True)
 libc.mount.argtypes = (c_char_p, c_char_p, c_char_p, c_ulong, c_char_p)
 libc.umount.argtypes = (c_char_p,)
 
-MS_RDONLY = 1
-MS_REMOUNT = 32
-MS_BIND = 4096
+MS_RDONLY   = 1 << 0
+MS_REMOUNT  = 1 << 5
+MS_BIND     = 1 << 12
 
+LCFS_MOUNT_FLAGS_REQUIRE_VERITY = 1 << 0
+LCFS_MOUNT_FLAGS_READONLY       = 1 << 1
+LCFS_MOUNT_FLAGS_IDMAP          = 1 << 3
+LCFS_MOUNT_FLAGS_TRY_VERITY     = 1 << 4
 
 class CFSOpts(Structure):
     _fields_ = [('objdirs', POINTER(c_char_p)),
@@ -42,11 +46,22 @@ def umount(what):
         error(f"umount({what}): {os.strerror(get_errno())}")
         raise OSError(get_errno())
 
-def mount_composefs(img, where, opts: CFSOpts):
+def mount_composefs(img, where, verity: bytes = None, idmap: Path = None):
     libcfs = CDLL(find_library('composefs'), use_errno=True)
     libcfs.lcfs_mount_image.argtypes = (c_char_p, c_char_p, CFSOpts)
-    if libcfs.lcfs_mount_image(img.encode(), where.encode(), opts):
+
+    flags = LCFS_MOUNT_FLAGS_REQUIRE_VERITY|LCFS_MOUNT_FLAGS_READONLY
+    idmap_fd = None
+    if idmap is not None and idmap.exists():
+        flags |= LCFS_MOUNT_FLAGS_IDMAP
+        idmap_fd = os.open(str(idmap))
+    opts = CFSOpts([b"/ostree/repo/objects"], 1,
+                   None, None, verity, flags,
+                   idmap_fd, None, None, None)
+
+    if libcfs.lcfs_mount_image(str(img).encode(), str(where).encode(), opts):
         error(f"lcfs_mount_image({where}): {os.strerror(get_errno())}")
+        raise OSError(get_errno())
 
 
 def edit_sysroot(fn: Callable) -> tuple[int, str]:
