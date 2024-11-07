@@ -99,7 +99,7 @@ class DeploymentSet:
         '''
         survey_compatible(self.root, self.exts, force)
 
-        dep_space = Path('ostree', 'deploy', self.root.get_osname(), 'extensions', 'deploy')
+        dep_space = Path('/', 'ostree', 'deploy', self.root.get_osname(), 'extensions', 'deploy')
         deploy_aware(self.repo, self.ref, dep_space, self.DEPLOY_PATH)
 
         for ent in Extension.DEPLOY_PATH.iterdir():

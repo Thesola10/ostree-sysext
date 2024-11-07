@@ -51,13 +51,18 @@ def mount_composefs(img, where, verity: bytes = None, idmap: Path = None):
     libcfs.lcfs_mount_image.argtypes = (c_char_p, c_char_p, CFSOpts)
 
     flags = LCFS_MOUNT_FLAGS_REQUIRE_VERITY|LCFS_MOUNT_FLAGS_READONLY
-    idmap_fd = None
+    idmap_fd = -1
     if idmap is not None and idmap.exists():
         flags |= LCFS_MOUNT_FLAGS_IDMAP
         idmap_fd = os.open(str(idmap))
-    opts = CFSOpts([b"/ostree/repo/objects"], 1,
+    repobjs = (c_char_p * 2)()
+    repobjs[0] = b"/ostree/repo/objects"
+
+    reserved = (c_uint32 * 4)()
+    reserved2 = (c_char_p * 4)()
+    opts = CFSOpts(repobjs, 1,
                    None, None, verity, flags,
-                   idmap_fd, f"/tmp/{str(img)}".encode(), None, None)
+                   idmap_fd, f"/tmp/{str(img)}".encode(), reserved, reserved2)
 
     if libcfs.lcfs_mount_image(str(img).encode(), str(where).encode(), opts):
         error(f"lcfs_mount_image({where}): {os.strerror(get_errno())}")
