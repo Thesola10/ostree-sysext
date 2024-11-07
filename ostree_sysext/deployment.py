@@ -5,7 +5,7 @@ from logging        import warn, error
 from pathlib        import Path
 from tempfile       import mkdtemp
 
-from .repo          import RepoExtension, open_system_repo, ref_is_deployment_set, commit_dir, pin_ref, checkout_aware, deploy_aware, NOFLAGS
+from .repo          import RepoExtension, open_system_repo, ref_is_deployment_set, commit_dir, pin_ref, deploy_aware, NOFLAGS
 from .extensions    import Extension, DeployState
 from .plugin        import survey_compatible, survey_deploy_finish
 from .sandbox       import umount, edit_sysroot
@@ -87,6 +87,9 @@ class DeploymentSet:
             raise OSError(err)
         self.ref = ref
         self.digest = hash(tuple(self.exts))
+
+        self.repo = OSTree.Repo.new(self.repo.get_path())
+        self.repo.open()
         # TODO: flip-flop ref pin @ ostree-sysext/osname/<deploy>/<ext>
         return self.ref
 

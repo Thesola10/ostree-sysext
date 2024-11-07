@@ -10,8 +10,7 @@ from io             import StringIO
 
 from .systemd       import list_staged, list_deployed
 from .extensions    import Extension, DeployState
-from .sandbox       import mount, umount
-
+from .sandbox       import mount, umount, edit_sysroot, mount_composefs
 
 NOFLAGS = Gio.FileQueryInfoFlags.NONE
 
@@ -87,7 +86,8 @@ def checkout_aware(repo: OSTree.Repo, ref: str, dest: str):
 
     local, _r, commit = repo.read_commit(ref)
     destpath = Path(dest, f'{commit}.0')
-    repo.checkout_at(opts, None, str(destpath), commit)
+    rfd = os.open(os.getcwd(), os.O_RDONLY)
+    repo.checkout_at(opts, rfd, str(destpath), commit)
     if composefs_is_enabled():
         repo.checkout_composefs(None, None, str(destpath.joinpath('.ostree.cfs')), commit)
 
@@ -98,7 +98,7 @@ def deploy_aware(repo: OSTree.Repo, ref: str, prefix: Path, dest: Path):
     local, _r, commit = repo.read_commit(ref)
     coutpath = Path(prefix, f'{commit}.0')
     if not coutpath.exists():
-        checkout_aware(repo, ref, prefix)
+        edit_sysroot(lambda: (0, checkout_aware(repo, ref, prefix)))
     if coutpath.joinpath('.ostree.cfs').exists():
         dest.mkdir(parents=True, exist_ok=True)
         mount_composefs(coutpath.joinpath('.ostree.cfs'), dest)
@@ -118,6 +118,7 @@ def commit_dir(repo: OSTree.Repo, dir: Path, parent: str = None, \
     wr.write_directory_to_mtree(Gio.File.new_for_path(str(dir)), mtree)
     done, mr = wr.write_mtree(mtree)
     done, ref = wr.write_commit(parent, subject, body, meta, mr)
+    wr.commit_transaction()
     return ref
 
 def pin_ref(repo: OSTree.Repo, commit: str, ref: str):
