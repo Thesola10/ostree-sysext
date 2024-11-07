@@ -175,7 +175,7 @@ class RepoExtension(Extension):
         mypath = self.EXTENSION_PATH.joinpath(self.id, 'deploy')
         if not mypath.joinpath(f'{self.commit}.0').exists():
             checkout_aware(self.repo, self.commit, mypath)
-        return mypath
+        return mypath.joinpath(f'{self.commit}.0')
 
     def deploy(self):
         # Mount (composefs) or symlink into /run/extensions
