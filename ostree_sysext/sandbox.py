@@ -1,4 +1,5 @@
 import os
+import sys
 import pwd
 
 from ctypes         import CDLL, POINTER, Structure, c_char_p, c_int, c_uint32, c_ulong, c_size_t, get_errno
@@ -8,7 +9,6 @@ from pathlib        import Path
 from logging        import error
 from tempfile       import mkdtemp
 from functools      import reduce
-from sys            import exit
 
 
 libc = CDLL(find_library('c'), use_errno=True)
@@ -69,8 +69,8 @@ def edit_sysroot(fn: Callable) -> tuple[int, str]:
     Useful for working on an OSTree deployment root.
     Requires root privileges.
     '''
-    child = os.fork()
     r_fd, w_fd = os.pipe()
+    child = os.fork()
     if child > 0:
         os.close(w_fd)
         pid, ret = os.waitpid(child, 0)
@@ -86,7 +86,7 @@ def edit_sysroot(fn: Callable) -> tuple[int, str]:
         os.close(r_fd)
         ret, msg = fn()
         os.write(w_fd, msg.encode())
-        exit(ret)
+        sys.exit(ret)
     pass
 
 def edit_sandbox(fn: Callable, layers: list[Path], \
@@ -96,8 +96,8 @@ def edit_sandbox(fn: Callable, layers: list[Path], \
     Useful for building or editing a sysext.
     Will discard root privileges.
     '''
-    child = os.fork()
     r_fd, w_fd = os.pipe()
+    child = os.fork()
     if child > 0:
         os.close(w_fd)
         pid, ret = os.waitpid(child, 0)
@@ -154,6 +154,6 @@ def edit_sandbox(fn: Callable, layers: list[Path], \
         os.close(r_fd)
         ret, msg = fn()
         write(w_fd, msg)
-        exit(ret)
+        sys.exit(ret)
 
     pass
