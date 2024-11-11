@@ -86,10 +86,13 @@ def checkout_aware(repo: OSTree.Repo, ref: str, dest: str):
 
     local, _r, commit = repo.read_commit(ref)
     destpath = Path(dest, f'{commit}.0')
-    rfd = os.open(os.getcwd(), os.O_RDONLY)
+    rfd = os.open(repo.get_path().get_path(), os.O_RDONLY)
     repo.checkout_at(opts, rfd, str(destpath), commit)
     if composefs_is_enabled(repo):
-        repo.checkout_composefs(None, rfd, str(destpath.joinpath('.ostree.cfs')), commit)
+        wr = OSTree.Repo.new(repo.get_path())
+        wr.open()
+        wr.checkout_composefs(None, rfd, str(destpath.joinpath('.ostree.cfs')), commit)
+    return ""
 
 def deploy_aware(repo: OSTree.Repo, ref: str, prefix: Path, dest: Path):
     '''Perform checkout checks, and deploy ref to target directory while
