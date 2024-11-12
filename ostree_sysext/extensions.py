@@ -25,15 +25,6 @@ class CompatVote(Enum):
     WARN    = 1 # Objection can be bypassed using --force
     VETO    = 2 # Objection cannot be bypassed
 
-class TransactionType(Enum):
-    ADD     = 0 # Add one or more packages to an extension
-    REMOVE  = 1 # Remove one or more packages from an extension
-    UPDATE  = 2 # Build an updated version of the extension
-    USER0   = 128   #
-    USER1   = 129   # Implementation-specific transactions
-    USER2   = 130   #
-    USER3   = 131   #
-
 
 class Extension:
     DEPLOY_PATH = Path('/','run','extensions')

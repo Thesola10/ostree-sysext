@@ -136,13 +136,13 @@ def pin_ref(repo: OSTree.Repo, commit: str, ref: str):
 class RepoExtension(Extension):
     EXTENSION_PATH = Path('ostree','extensions')
 
-    # TODO: Store builder as commit metadata for updating
-
     repo: OSTree.Repo
     commit: str
     root: OSTree.RepoFile
     rel_info: dict
     id: str
+    builder: str
+    build_context: dict
 
     def __init__(self, repo: OSTree.Repo, ref: str):
         commit = repo.read_commit(ref)
@@ -150,7 +150,13 @@ class RepoExtension(Extension):
             raise ValueError("Specified ref is not a valid OSTree sysext")
         self.root = commit.out_root
         self.repo = repo
-        self.commit = commit[2]
+        self.commit = commit.out_commit
+
+        res, meta = repo.read_commit_detached_metadata(self.commit)
+        if meta is not None and 'ostree-sysext.builder' in meta.keys():
+            self.builder = meta['ostree-sysext.builder']
+            self.build_context = meta['ostree-sysext.build-context']
+
         ext_rel = commit.out_root \
                         .get_child('usr').get_child('lib') \
                         .get_child('extension-release.d')
