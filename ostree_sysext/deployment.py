@@ -102,6 +102,7 @@ class DeploymentSet:
         dep_space = Path('/', 'ostree', 'deploy', self.root.get_osname(), 'extensions', 'deploy')
         deploy_aware(self.repo, self.ref, dep_space, self.DEPLOY_PATH)
 
+        Extension.DEPLOY_PATH.mkdir(parents=True, exist_ok=True)
         for ent in Extension.DEPLOY_PATH.iterdir():
             if ent.is_mount():
                 umount(str(ent))
