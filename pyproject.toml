@@ -20,17 +20,14 @@ name = "Karim Vergnes"
 email = "me@thesola.io"
 
 [build-system]
-requires = [ "setuptools" ]
-build-backend = "setuptools.build_meta"
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
 
 [project.scripts]
 ostree-sysext = "ostree_sysext.cli:main_fixed_for_ostree"
 
-[tool.setuptools]
-py-modules = [ "ostree_sysext" ]
-
-[tool.setuptools.package-data]
-"ostree_sysext.dbus" = [ "*.service", "*.xml" ]
+[tool.flit.external-data]
+directory = "pkg"
 
 [tool.bumpver]
 current_version = "0.0.1"
