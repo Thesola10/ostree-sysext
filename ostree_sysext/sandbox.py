@@ -50,6 +50,9 @@ def mount_composefs(img, where, verity: bytes = None, idmap: Path = None):
     libcfs = CDLL(find_library('composefs'), use_errno=True)
     libcfs.lcfs_mount_image.argtypes = (c_char_p, c_char_p, CFSOpts)
 
+    tmpdir = Path('/', 'run', 'ostree', '.private', *img.parts[2:])
+    tmpdir.mkdir(parents=True, exist_ok=True)
+
     flags = LCFS_MOUNT_FLAGS_REQUIRE_VERITY|LCFS_MOUNT_FLAGS_READONLY
     idmap_fd = -1
     if idmap is not None and idmap.exists():
@@ -62,7 +65,7 @@ def mount_composefs(img, where, verity: bytes = None, idmap: Path = None):
     reserved2 = (c_char_p * 4)()
     opts = CFSOpts(repobjs, 1,
                    None, None, verity, flags,
-                   idmap_fd, f"/tmp/{str(img)}".encode(), reserved, reserved2)
+                   idmap_fd, str(tmpdir).encode(), reserved, reserved2)
 
     if libcfs.lcfs_mount_image(str(img).encode(), str(where).encode(), opts):
         error(f"lcfs_mount_image({where}): {os.strerror(get_errno())}")
