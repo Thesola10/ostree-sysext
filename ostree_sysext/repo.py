@@ -133,6 +133,7 @@ def pin_ref(repo: OSTree.Repo, commit: str, ref: str):
     else:
         raise OSError(ret)
 
+
 class RepoExtension(Extension):
     EXTENSION_PATH = Path('ostree','extensions')
 
@@ -168,14 +169,26 @@ class RepoExtension(Extension):
     def get_state(self):
         staged = self.id in list_staged().keys()
         deployed = self.id in list_deployed()
+        osrel = None
         if staged and deployed:
             return DeployState.ACTIVE
         elif staged:
             return DeployState.STAGED
         elif deployed:
             return DeployState.UNSTAGED
-        else:
-            return DeployState.INACTIVE
+
+        with open('etc/os-release') as osrf:
+            osrel = dotenv_values(stream=osrf)
+        if rel_info['ID'] != osrel['ID'] and rel_info['ID'] != '_any':
+            return DeployState.INCOMPAT
+        elif 'ARCHITECTURE' in rel_info.keys() \
+                and rel_info['ARCHITECTURE'] != '_any' \
+                and rel_info['ARCHITECTURE'] != os.uname().machine:
+            return DeployState.INCOMPAT
+        elif 'VERSION_ID' in rel_info.keys() \
+                and rel_info['VERSION_ID'] != osrel['VERSION_ID']:
+            return DeployState.OUTDATED
+        return DeployState.INACTIVE
 
     def get_rel_info(self):
         return self.rel_info
