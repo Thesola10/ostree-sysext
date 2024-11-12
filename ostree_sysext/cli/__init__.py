@@ -11,6 +11,7 @@ from rich.logging       import RichHandler
 from ..                 import __version__
 from .commands          import list_command, deploy, add_remove, mutate
 from ..dbus             import dbus_main
+from ..boot             import boot_main
 
 cons = Console()
 common_group = OptionGroup("Common options for ostree-sysext")
@@ -129,3 +130,8 @@ def _initramfs(**kwargs):
               help='Internal command used to invoke daemon over D-Bus')
 def _daemon(**kwargs):
     return dbus_main()
+
+@main.command("early-boot", hidden=True,
+              help='Internal command used to load sysexts on boot')
+def _early_boot(**kwargs):
+    return boot_main()

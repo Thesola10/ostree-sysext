@@ -1,0 +1,15 @@
+[Unit]
+Description=Load system extensions managed by ostree-sysext on boot
+Documentation=man:ostree-sysext(1)
+ConditionPathExists=/ostree
+
+DefaultDependencies=no
+After=local-fs.target
+Before=sysinit.target systemd-sysext.service
+
+[Service]
+Type=oneshot
+ExecStart=ostree-sysext early-boot
+
+[Install]
+WantedBy=sysinit.target

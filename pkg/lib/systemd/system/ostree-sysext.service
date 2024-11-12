@@ -1,5 +1,3 @@
-# Install to lib/systemd/system
-
 [Unit]
 Description=OSTree System Extension Management Daemon
 Documentation=man:ostree-sysext(1)
@@ -25,5 +23,3 @@ TimeoutStartSec=5m
 
 ExecStart=+ostree-sysext daemon
 ExecReload=ostree-sysext refresh
-
-# vim: ft=systemd
