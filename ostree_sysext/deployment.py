@@ -77,6 +77,8 @@ class DeploymentSet:
 
         Path(tgt, 'staged').mkdir()
         for ext in self.exts:
+            # Permit duplicate entries, last entry for ID wins
+            Path(tgt, 'staged', ext.get_id()).unlink(missing_ok=True)
             Path(tgt, 'staged', ext.get_id()).symlink_to(f"/{ext.get_root()}")
 
         Path(tgt, 'state').mkdir()

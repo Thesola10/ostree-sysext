@@ -4,9 +4,9 @@ import pwd
 from logging        import error
 from mntfinder      import getMountPoint, getAllMountPoints
 from pathlib        import Path
+from dotenv         import dotenv_values
 
-
-from .systemd       import ExternalExtension, list_deployed, list_staged, refresh_sysexts
+from .systemd       import list_deployed, list_staged, refresh_sysexts
 from .repo          import RepoExtension, open_system_repo, find_sysext_refs
 from .extensions    import Extension, DeployState
 from .deployment    import DeploymentSet
@@ -59,6 +59,26 @@ class MutableExtension(Extension):
         if self.get_state() == DeployState.EXTERNAL:
             raise ValueError("Cannot undeploy an external mutable!")
         self.MUTABLE_DEPLOY_PATH.joinpath(self.root).unlink()
+
+
+class ExternalExtension(Extension):
+    root: str
+    rel_info: dict
+    id: str
+
+    # While we could provide staged/unstaged status for unmanaged extensions,
+    # it would cause confusion, so let's not.
+
+    def __init__(self, id: str, root: str):
+        ext_rel = Path(root).joinpath('usr', 'lib',
+                                      'extension-release.d',
+                                      f'extension-release.{id}')
+        if not ext_rel.exists():
+            raise ValueError("Specified dir is not a valid systemd sysext")
+        self.root = root
+        self.id = id
+        with ext_rel.open() as f:
+            self.rel_info = dotenv_values(stream=f)
 
 
 def list_sysexts() -> list[Extension]:

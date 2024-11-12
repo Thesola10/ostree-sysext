@@ -180,16 +180,3 @@ class RepoExtension(Extension):
             checkout_aware(self.repo, self.commit, mypath)
         return mypath.joinpath(f'{self.commit}.0')
 
-    def deploy(self):
-        # Mount (composefs) or symlink into /run/extensions
-        # TODO: Retire in favor of deployment.DeploymentSet
-        mypath = self.EXTENSION_PATH.joinpath(self.id, 'deploy')
-        deploy_aware(self.repo, self.commit, mypath, self.DEPLOY_PATH.joinpath(self.id))
-
-    def undeploy(self):
-        # Unmount/unlink from /run/extensions
-        if self.DEPLOY_PATH.joinpath(self.id).is_mount():
-            umount(self.DEPLOY_PATH.joinpath(self.id))
-            self.DEPLOY_PATH.joinpath(self.id).rmdir()
-        else:
-            self.DEPLOY_PATH.joinpath(self.id).unlink()

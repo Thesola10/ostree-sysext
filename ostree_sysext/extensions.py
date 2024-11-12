@@ -64,9 +64,3 @@ class Extension:
 
     def get_root(self):
         raise NotImplemented()
-
-    def deploy(self):
-        raise NotImplemented()
-
-    def undeploy(self):
-        raise NotImplemented()
