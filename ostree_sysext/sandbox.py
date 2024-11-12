@@ -48,7 +48,7 @@ def umount(what):
 
 def mount_composefs(img, where, verity: bytes = None, idmap: Path = None):
     libcfs = CDLL(find_library('composefs'), use_errno=True)
-    libcfs.lcfs_mount_image.argtypes = (c_char_p, c_char_p, CFSOpts)
+    libcfs.lcfs_mount_image.argtypes = (c_char_p, c_char_p, POINTER(CFSOpts))
 
     tmpdir = Path('/', 'run', 'ostree', '.private', *img.parts[2:])
     tmpdir.mkdir(parents=True, exist_ok=True)
