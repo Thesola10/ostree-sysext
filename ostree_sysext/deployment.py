@@ -95,7 +95,7 @@ class DeploymentSet:
         # TODO: flip-flop ref pin @ ostree-sysext/osname/<deploy>/<ext>
         return self.ref
 
-    def apply(self, force = False):
+    def apply(self, force = False, syslink = True):
         '''Apply and replace the current deployment set with this one.
         Will also update /run/extensions.
         '''
@@ -120,7 +120,8 @@ class DeploymentSet:
         sr = OSTree.Sysroot()
         sr.load()
         dep = sr.get_deployment_dirpath(self.root)
-        os.symlink(f'../extensions/deploy/{self.ref}.0', f'{dep}.extensions')
+        if syslink:
+            os.symlink(f'../extensions/deploy/{self.ref}.0', f'{dep}.extensions')
 
     def get_extensions(self) -> list[RepoExtension]:
         return self.exts
