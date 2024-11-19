@@ -5,7 +5,6 @@ from gi.repository          import OSTree, Gio
 
 from .deployment            import DeploymentSet
 from .repo                  import open_system_repo
-from .systemd               import refresh_sysexts
 
 def get_deployment() -> DeploymentSet:
     dep_path = ""
@@ -29,4 +28,3 @@ def get_deployment() -> DeploymentSet:
 def boot_main():
     dep = get_deployment()
     dep.apply(syslink=False)
-    refresh_sysexts("--mutable=auto")
