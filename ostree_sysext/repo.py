@@ -7,6 +7,7 @@ from gi.repository  import OSTree, Gio
 from pathlib        import Path
 from dotenv         import dotenv_values
 from io             import StringIO
+from logging        import warn
 
 from .systemd       import list_staged, list_deployed
 from .extensions    import Extension, DeployState
@@ -64,8 +65,13 @@ def find_sysext_refs(repo: OSTree.Repo, prefix = None):
     '''
     success, refs = repo.list_refs(prefix)
     for ref in refs.keys():
-        if ref_is_sysext(repo.read_commit(ref)):
-            yield ref
+        try:
+            if ref_is_sysext(repo.read_commit(ref)):
+                yield ref
+        except:
+            warn(f"Could not open ref \"{ref}\" for analysis")
+            pass    # rpm-ostree sometimes keeps broken refs that can trip
+                    # up the detector due to missing metadata
 
 def composefs_is_enabled(repo: OSTree.Repo) -> bool:
     '''Check whether composefs is enabled in the OSTree repository.
