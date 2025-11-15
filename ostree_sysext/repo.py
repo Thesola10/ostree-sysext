@@ -185,14 +185,14 @@ class RepoExtension(Extension):
 
         with open('etc/os-release') as osrf:
             osrel = dotenv_values(stream=osrf)
-        if rel_info['ID'] != osrel['ID'] and rel_info['ID'] != '_any':
+        if self.rel_info['ID'] != osrel['ID'] and self.rel_info['ID'] != '_any':
             return DeployState.INCOMPAT
-        elif 'ARCHITECTURE' in rel_info.keys() \
-                and rel_info['ARCHITECTURE'] != '_any' \
-                and rel_info['ARCHITECTURE'] != os.uname().machine:
+        elif 'ARCHITECTURE' in self.rel_info.keys() \
+                and self.rel_info['ARCHITECTURE'] != '_any' \
+                and self.rel_info['ARCHITECTURE'] != os.uname().machine:
             return DeployState.INCOMPAT
-        elif 'VERSION_ID' in rel_info.keys() \
-                and rel_info['VERSION_ID'] != osrel['VERSION_ID']:
+        elif 'VERSION_ID' in self.rel_info.keys() \
+                and self.rel_info['VERSION_ID'] != osrel['VERSION_ID']:
             return DeployState.OUTDATED
         return DeployState.INACTIVE
 
