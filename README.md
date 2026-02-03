@@ -1,9 +1,5 @@
 # <img src="https://raw.githubusercontent.com/thesola10/ostree-sysext/master/.github/icon.svg" width="64"></img> ostree-sysext
 
-## DISCLAIMER
-
-ostree-sysext is currently alpha software, provided as-is with no guarantee.
-
 > [!WARNING]
 > Not everything is implemented! I encourage you to check out [the wiki](https://github.com/thesola10/ostree-sysext/wiki) for the intended design.
 
